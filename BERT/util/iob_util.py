@@ -18,12 +18,11 @@ Example:
 
 Gabriel Andrade modifications:
     - Allow direct extraction from string containing entities annotated using xml tags (eg. <m-key state="executed">市販の薬</m-key>).
-    - Better support to handle inconsistent tags (eg. missing leading or trailing tag)  .
+    - Better support to handle mismatching tags (eg. missing leading or trailing tag) .
 """
 
-import sys
-from xml.etree.ElementTree import iterparse
-import xml.etree.ElementTree as ET
+
+import lxml.etree as etree
 
 
 def split_tag(tag):
@@ -129,9 +128,13 @@ def convert_iob_to_xml(tokens, iobs):
     return convert_dict_to_xml(''.join(tokens), dic)
 
 
-def convert_xml_to_taglist(sent, tag_list=None, attr=[]):
+def convert_xml_to_taglist(sent, tag_list=None, attr=[], ignore_mismatch_tags=True):
     text = '<sent>' + sent + '</sent>'
-    parser = ET.XMLPullParser(['start', 'end'])
+
+    # Adding recover parameter allows handling missing tags.
+    # It will reject closing tags with not start.
+    # It will consider the start tag to span until the end of the sentence, if not close is found.
+    parser = etree.XMLPullParser(['start', 'end'], recover=not ignore_mismatch_tags)
     parser.feed(text)
 
     ne_type = "O"
@@ -207,7 +210,7 @@ def convert_taglist_to_iob(sent, label, tokenizer=list):
     return results
 
 
-def convert_xml_to_iob(sent, tag_list=None, attr=None, tokenizer=list):
+def convert_xml_to_iob(sent, tag_list=None, attr=None, tokenizer=list, ignore_mismatch_tags=True):
     """Convert xml to iob.
 
     Convert xml to IOB2 format. You can limit valid tag and attribute.
@@ -221,7 +224,7 @@ def convert_xml_to_iob(sent, tag_list=None, attr=None, tokenizer=list):
     Returns:
         List (tuple): List of (token, IOB2 tag)
     """
-    res, label = convert_xml_to_taglist(sent, tag_list=tag_list, attr=attr)
+    res, label = convert_xml_to_taglist(sent, tag_list=tag_list, attr=attr, ignore_mismatch_tags=ignore_mismatch_tags)
     iob = convert_taglist_to_iob(res, label, tokenizer=tokenizer)
     return [item for item in iob if item[0] != '\n']
 

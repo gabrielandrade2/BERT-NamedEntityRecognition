@@ -1,12 +1,14 @@
 import re
 import pandas as pd
 from xml.dom import minidom
+
+from lxml.etree import XMLSyntaxError
 from mojimoji import han_to_zen
 from BERT.util.iob_util import convert_xml_to_iob
 
 
 def xml_to_articles(file):
-    """Extract all instances of <article> into a list from a given xml file.
+    """Extract all instances of <article> into a list, from a given xml file.
 
     :param file: The corpus xml file.
     :return: List of strings, containing all the articles as found in the file.
@@ -58,7 +60,7 @@ def convert_xml_to_dataframe(file, tag_list, print_info=True):
     return df
 
 
-def convert_xml_to_iob_list(file, tag_list, split_sentences=False, romaji_to_zen=False):
+def convert_xml_to_iob_list(file, tag_list, split_sentences=False, romaji_to_zen=False, ignore_mismatch_tags=True):
     """Converts a corpus xml file to a tuple of strings and IOB tags.
     The strings can be split by article or sentences.
 
@@ -66,6 +68,7 @@ def convert_xml_to_iob_list(file, tag_list, split_sentences=False, romaji_to_zen
     :param tag_list: The list of tags to be extracted from the file.
     :param split_sentences: Should articles be split into sentences?
     :param romaji_to_zen: Convert all romaji to Zenkaku?
+    :param ignore_mismatch_tags: Should skip texts that contain missing/mismatch xml tags
     :return: The list of strings and the list of IOB tags
     """
 
@@ -78,19 +81,22 @@ def convert_xml_to_iob_list(file, tag_list, split_sentences=False, romaji_to_zen
     for t in texts:
         sent = list()
         tag = list()
-        iob = convert_xml_to_iob(t, tag_list)
-        # Convert tuples into lists
-        for item in iob:
-            if romaji_to_zen:
-                sent.append(han_to_zen(item[0], kana=False))
-            else:
-                sent.append(item[0])
-            tag.append(item[1])
-        items.append(sent)
-        tags.append(tag)
+        try:
+            iob = convert_xml_to_iob(t, tag_list, ignore_mismatch_tags=ignore_mismatch_tags)
+            # Convert tuples into lists
+            for item in iob:
+                if romaji_to_zen:
+                    sent.append(han_to_zen(item[0], kana=False))
+                else:
+                    sent.append(item[0])
+                tag.append(item[1])
+            items.append(sent)
+            tags.append(tag)
+        except XMLSyntaxError:
+            print("Skipping text with xml syntax error")
     return items, tags
 
-def convert_xml_to_iob_file(file, tag_list, out_file, split_sentences=False, romaji_to_zen=False):
+def convert_xml_to_iob_file(file, tag_list, out_file, split_sentences=False, romaji_to_zen=False, ignore_mismatch_tags=True):
     """Converts a corpus xml file into IOB format and save it to a file in CONLL 2003 format.
 
     :param file: The XML file to be parsed.
@@ -98,7 +104,7 @@ def convert_xml_to_iob_file(file, tag_list, out_file, split_sentences=False, rom
     :param out_file: The output path for the .iob file
     :param split_sentences: Should articles be split into sentences?
     :param romaji_to_zen: Convert all romaji to Zenkaku?
-    :return:
+    :param ignore_mismatch_tags: Should skip texts that contain missing/mismatch xml tags
     """
 
     # Preprocess
@@ -113,10 +119,14 @@ def convert_xml_to_iob_file(file, tag_list, out_file, split_sentences=False, rom
         print("Failed to open file for writing: " + out_file)
         return
     for text in texts:
-        iob = convert_xml_to_iob(text, tag_list)
-        f.write('\n'.join('{}\t{}'.format(x[0], x[1]) for x in iob))
-        f.write('\n')
-
+        try:
+            iob = convert_xml_to_iob(text, tag_list, ignore_mismatch_tags=ignore_mismatch_tags)
+            if romaji_to_zen:
+                iob[0] = [han_to_zen(x, kana=False) for x in iob[0]]
+            f.write('\n'.join('{}\t{}'.format(x[0], x[1]) for x in iob))
+            f.write('\n')
+        except XMLSyntaxError:
+            print("Skipping text with xml syntax error")
 
 def __prepare_texts(file, split_sentences):
     """ Loads a file and applies all the preprocessing steps before format conversion.

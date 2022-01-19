@@ -8,3 +8,5 @@ transformers==4.15.0
 fugashi
 unidic_lite
 openpyxl
+lxml~=4.7.1
+scikit-learn~=1.0.2

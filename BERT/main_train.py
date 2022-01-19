@@ -19,8 +19,8 @@ if __name__ == '__main__':
         print("folder exists")
 
     ##### Load the data #####
-    df = convert_xml_to_dataframe(xmlFile, ['m-key'])
-    sentences, tags = convert_xml_to_iob_list(xmlFile, ['d'], False, True)
+    #df = convert_xml_to_dataframe(xmlFile, ['m-key'])
+    sentences, tags = convert_xml_to_iob_list(xmlFile, ['d'], True, True)
 
     ##### Split in train/test #####
     x_train, x_test, y_train, y_test = train_test_split(sentences, tags, test_size=0.2)
