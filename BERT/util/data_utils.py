@@ -1,4 +1,3 @@
-import torch
 import mojimoji
 
 def load_dataset(path):

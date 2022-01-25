@@ -18,7 +18,8 @@ Example:
 
 Gabriel Andrade modifications:
     - Allow direct extraction from string containing entities annotated using xml tags (eg. <m-key state="executed">市販の薬</m-key>).
-    - Better support to handle mismatching tags (eg. missing leading or trailing tag) .
+    - Better support to handle mismatching tags (eg. missing leading or trailing tag).
+    - Allow support for tags using 'i' (e.g. 'm-key')
 """
 
 
@@ -29,7 +30,7 @@ def split_tag(tag):
     if tag == "O":
         return tag, None
     else:
-        t, l = tag.split('-')
+        t, l = tag.split('-',1)
         return t, l
 
 
@@ -207,6 +208,7 @@ def convert_taglist_to_iob(sent, label, tokenizer=list):
         results.append((tokens[i], 'O'))
         i += 1
 
+    results = [i for i in results if not i[0] == ' ' or i[0] == '']
     return results
 
 
@@ -220,6 +222,7 @@ def convert_xml_to_iob(sent, tag_list=None, attr=None, tokenizer=list, ignore_mi
         tag_list (List): List of valid tag.
         attr (List): List of valid attribute.
         tokenizer (callable): Tokenize function. str->List
+        ignore_mismatch_tags (bool): Should it try to recover if tags are missing?
 
     Returns:
         List (tuple): List of (token, IOB2 tag)

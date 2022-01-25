@@ -1,4 +1,3 @@
-
 import pandas as pd
 import os
 import glob
@@ -14,7 +13,7 @@ if __name__ == '__main__':
 
     # load model
     MODEL = 'cl-tohoku/bert-base-japanese-char-v2'
-    model, tokenizer, id2label = load_model(MODEL, 'out')
+    model, tokenizer, id2label = load_model(MODEL, '../BERT/out')
 
     MAX_LENGTH = 512
 
@@ -72,7 +71,7 @@ if __name__ == '__main__':
         i = 0
         toStoreData = []
         for text in texts:
-            toPrint = text
+            toPrint = ''.join(text)
             for wordsDic in results[i]:
                 print(wordsDic["type"], " - ", wordsDic["word"])
                 entry = {
@@ -86,7 +85,7 @@ if __name__ == '__main__':
             i = i + 1
 
         # Save the dataframe to the file
-        df = pd.DataFrame(toStoreData, columns=['id', 'text', 'type', 'word'])
+        df = pd.DataFrame(toStoreData, columns=['id', 'text', 'type', 'drug'])
         with pd.ExcelWriter(path, mode='a', if_sheet_exists='replace', engine='openpyxl') as writer:
             df.to_excel(writer, sheet_name='my_extracted_drugs')
         print("")
