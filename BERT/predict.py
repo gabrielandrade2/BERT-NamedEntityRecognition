@@ -43,3 +43,9 @@ def predict(model, x):
 
 def convert_prediction_to_labels(prediction, vocabulary):
     return [[vocabulary[t] for t in tag] for tag in prediction]
+
+def remove_label_padding(sentences, labels):
+    new_labels = list()
+    for sent, label in zip(sentences, labels):
+        new_labels.append(label[:len(sent)])
+    return new_labels

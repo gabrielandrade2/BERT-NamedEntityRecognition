@@ -34,10 +34,11 @@ if __name__ == '__main__':
         tags = predict(model, sentences_embeddings)
         labels = convert_prediction_to_labels(tags, vocabulary)
         sentences = [tokenizer.convert_ids_to_tokens(t)[1:] for t in sentences_embeddings]
+        labels = remove_label_padding(sentences, labels)
 
         ne_dict = list()
         for sent, label in zip(sentences, labels):
-            ne_dict.extend(iob_util.convert_iob_to_dict(sent, label[:len(sent)]))
+            ne_dict.extend(iob_util.convert_iob_to_dict(sent, label))
 
         # Consolidate results in output variable
         drug = metadata[1]
@@ -55,6 +56,5 @@ if __name__ == '__main__':
             drug_dict[word] = count
         output_dict[drug] = drug_dict
 
-    print(output_dict)
-    output_table = pd.DataFrame.from_dict(output_dict, orient='index')
-    output_table.fillna(0)
+    output_table = pd.DataFrame.from_dict(output_dict, orient='index').fillna(0)
+    output_table.to_excel('../data/output.xlsx')
