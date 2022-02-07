@@ -2,7 +2,8 @@ import torch
 import json
 import numpy as np
 from transformers import BertJapaneseTokenizer, BertForTokenClassification
-from BERT.util import data_utils
+from util.bert import data_utils
+
 
 def load_model(model, model_dir):
     tokenizer = BertJapaneseTokenizer.from_pretrained(model)
@@ -39,3 +40,6 @@ def predict(model, x):
         res.extend(tags)
 
     return res
+
+def convert_prediction_to_labels(prediction, vocabulary):
+    return [[vocabulary[t] for t in tag] for tag in prediction]

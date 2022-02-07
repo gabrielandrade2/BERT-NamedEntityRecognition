@@ -4,8 +4,8 @@ import os
 from sklearn.model_selection import train_test_split
 from transformers import BertForTokenClassification, BertJapaneseTokenizer
 from BERT.train import train
-from BERT.util import bert_utils
-from BERT.util.xml_parser import convert_xml_to_iob_list
+from util.bert import bert_utils
+from util.bert.xml_parser import convert_xml_to_iob_list
 
 if __name__ == '__main__':
 

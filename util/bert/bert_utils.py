@@ -74,7 +74,7 @@ def label_to_input_values(labels, vocabulary, add_tags=True):
     """Convert a list of labels into its corresponding id to be passed to a BERT model.
 
     :param labels: A list of tags, representing tag sequence of a sentence.
-    :param vocabulary: A dictionary containing the used vocabulary
+    :param vocabulary: A dictionary containing the used vocabulary.
     :param add_tags: Should it add BERT control tags (PAD)?
     :return: A list the converted label sequence to an id sequence.
     """
@@ -91,11 +91,21 @@ def dataset_to_bert_input(data_x, data_y, tokenizer, vocabulary, add_tags=True):
     :param data_y: The labels for the sentences of the dataset.
     (Expects a list of list of labels for each character).
     :param tokenizer: The tokenizer to be used to generate the word embeddings.
-    :param vocabulary: The vocabulary
-    :param add_tags:
+    :param vocabulary: A dictionary containing the used vocabulary.
+    :param add_tags: Should add model tags.
     :return:
     """
     bert_data_x = [sentence_to_input_values(x, tokenizer, add_tags) for x in data_x]
     bert_data_y = [label_to_input_values(x, vocabulary, add_tags) for x in data_y]
 
     return bert_data_x, bert_data_y
+
+def prepare_sentences(sentences, tokenizer):
+    """ Prepare sentences from model execution (tokenization + CLS tag addition).
+
+    :param sentences: The list of sentences to be prepared.
+    :param tokenizer: The tokenizer object used by the model.
+    :return: The list of prepared sentences.
+    """
+    tokenized_sentences = [tokenizer.tokenize(t) for t in sentences]
+    return [tokenizer.convert_tokens_to_ids(['[CLS]'] + t) for t in tokenized_sentences]

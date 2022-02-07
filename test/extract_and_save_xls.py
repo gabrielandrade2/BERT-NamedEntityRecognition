@@ -4,7 +4,7 @@ import glob
 import mojimoji
 
 from BERT.predict import load_model, predict
-from BERT.util.iob_util import convert_iob_to_xml, convert_iob_to_dict
+from util.bert.iob_util import convert_iob_to_xml, convert_iob_to_dict
 
 if __name__ == '__main__':
     # Load the model and file list
@@ -24,7 +24,11 @@ if __name__ == '__main__':
         print("FILE: " + path)
         xls = pd.ExcelFile(path)
         sheetX = xls.parse(0)
-        texts = sheetX['患者像と薬歴（SOAPのS）']
+        try:
+            texts = sheetX['患者像と薬歴（SOAPのS）']
+        except KeyError:
+            print("Sheet not found, Skipping file")
+            continue
 
         # Clear empty lines
         i = 0

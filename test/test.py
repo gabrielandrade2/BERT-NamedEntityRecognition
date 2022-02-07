@@ -1,13 +1,6 @@
-import json
 import os
 
-from sklearn.model_selection import train_test_split
-from transformers import BertForTokenClassification, BertJapaneseTokenizer
-
-from BERT.train import train
-from BERT.util import bert_utils
-from BERT.util.xml_parser import convert_xml_to_iob_list, convert_xml_to_iob_file, xml_to_articles, __preprocessing, \
-    split_sentences, drop_texts_with_mismatched_tags
+from util.bert.xml_parser import convert_xml_to_iob_file
 
 if __name__ == '__main__':
 

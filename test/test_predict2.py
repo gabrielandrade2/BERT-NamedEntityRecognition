@@ -1,15 +1,14 @@
-import re
-
 import pandas as pd
-import umls_api
+from lxml.etree import XMLSyntaxError
 
 from BERT.predict import load_model, predict
 from util.bert import iob_util
 from util.bert.bert_utils import normalize_dataset
-from util.bert.xml_parser import xml_to_articles, __preprocessing, split_sentences, drop_texts_with_mismatched_tags, \
-    convert_xml_to_iob_list
+from util.bert.iob_util import convert_xml_to_iob
+from util.bert.xml_parser import __preprocessing, split_sentences, drop_texts_with_mismatched_tags
 from seqeval.metrics import accuracy_score, f1_score, precision_score, classification_report
 from seqeval.scheme import IOB2
+
 from dnorm_j import DNorm
 
 
@@ -20,24 +19,51 @@ def flatten_list(list):
     flat_list = [item for sublist in list for item in sublist]
     return flat_list
 
+def convert_text_to_iob_list(texts, tag_list, ignore_mismatch_tags=True):
+    # Preprocess
+    texts = __preprocessing(texts)
+
+    # Convert
+    items = list()
+    tags = list()
+    i = 0
+    for t in texts:
+        sent = list()
+        tag = list()
+        try:
+            iob = convert_xml_to_iob(t, tag_list, ignore_mismatch_tags=ignore_mismatch_tags)
+            # Convert tuples into lists
+            for item in iob:
+                if item[0] == ' ':
+                    continue
+                sent.append(item[0])
+                tag.append(item[1])
+            items.append(sent)
+            tags.append(tag)
+            i = i + 1
+        except XMLSyntaxError:
+            print("Skipping text with xml syntax error, id: " + str(i))
+    return items, tags
+
+
 if __name__ == '__main__':
     ##### Load model #####
     MODEL = 'cl-tohoku/bert-base-japanese-char-v2'
     model, tokenizer, id2label = load_model(MODEL, '../BERT/out')
-    TAG_LIST = ['d']
+    TAG_LIST = ['C']
 
     #### Load data #####
-    # Get clean articles from file to tag
-    xmlFile = '../data/drugHistoryCheck.xml'
-    texts = xml_to_articles(xmlFile)
-    texts = __preprocessing(texts)
-    texts = split_sentences(texts)
-    texts = drop_texts_with_mismatched_tags(texts)
-    # Remove tags
-    texts = [re.sub('<[^>]*>', '', t) for t in texts]
+    file = '../data/DATA_IM_v6.txt'
+    data = pd.read_csv(file, sep="	")
+    texts_tagged = data['text_tagged'].tolist()
+    texts_raw = data['text_raw'].tolist()
+
+    texts = __preprocessing(texts_raw)
+    texts = split_sentences(texts_raw)
+    texts = drop_texts_with_mismatched_tags(texts_raw)
 
     # Get iob info from xml as ground true labels
-    original_sentences, original_labels = convert_xml_to_iob_list(xmlFile, TAG_LIST, should_split_sentences=True)
+    original_sentences, original_labels = convert_text_to_iob_list(texts_tagged, TAG_LIST)
 
     ##### Tokenize text for BERT #####
     # print(sum([len(t) for t in texts]))
@@ -60,7 +86,7 @@ if __name__ == '__main__':
 
     ##### Save output iob file #####
     correct = 0
-    f = open("out/iob_predict_" + xmlFile.split('/')[-1] + ".iob", 'w')
+    f = open("out/iob_predict_" + file.split('/')[-1] + ".iob", 'w')
     for original_sentence, original_sentence_label, output_sentence, predict_sentence_label in zip(original_sentences, original_labels, data_x, labels):
         for original_char, original_char_label, output_char, predict_char_label in zip(original_sentence, original_sentence_label, output_sentence, predict_sentence_label):
             line = original_char + '\t' + original_char_label + '\t' + output_char + '\t' + predict_char_label + '\n'
@@ -79,12 +105,11 @@ if __name__ == '__main__':
 
     output = pd.DataFrame()
     i = 0
+
     ##### Match tags to UMLS ####
-    for sent_number in range(len(data_x)):
+    for sent_number in range(len(original_sentences)):
 
-        print('Sentence', sent_number, ' of ', len(data_x))
-
-        ne_dict = iob_util.convert_iob_to_dict(data_x[sent_number], labels[sent_number])
+        ne_dict = iob_util.convert_iob_to_dict(original_sentences[sent_number], labels[sent_number])
 
         # Normalize
         normalized_entities = list()
@@ -97,22 +122,18 @@ if __name__ == '__main__':
         df['normalized'] = normalized_entities
 
         # Search on UMLS
+        import umls_api
+
         cuis = list()
         for entity in normalized_entities:
-            results = umls_api.API(api_key='').term_search(entity)
+            results = umls_api.API(api_key='29d4de15-33b3-465c-bd93-f71c3712d55e').term_search(entity)
             try:
                 i = i + 1
                 cui = results['result']['results'][0]['ui']
-                print(cui)
+                print(i, cui)
             except Exception:
                 cui = 0
             cuis.append(cui)
         df['cui'] = cuis
         df.insert(0, 'Sentence', sent_number)
-        output = output.append(df, ignore_index=True)
-
-        # Search on MedDRA
-
-
-    # Output to csv
-    output.to_csv("output.csv", sep=";")
+        output = output.append(df)

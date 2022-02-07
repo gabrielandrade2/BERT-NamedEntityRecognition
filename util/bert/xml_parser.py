@@ -3,7 +3,7 @@ import pandas as pd
 
 from xml.dom import minidom
 from lxml.etree import XMLSyntaxError, XMLParser
-from BERT.util.iob_util import convert_xml_to_iob
+from util.bert.iob_util import convert_xml_to_iob
 
 
 def xml_to_articles(file):
@@ -161,7 +161,6 @@ def __preprocessing(texts, remove_core_tag=True):
 
         # Remove all \n from the beginning and end of the sentences
         text = text.strip()
-        import unicodedata
         processed_articles.append(text)
     return processed_articles
 

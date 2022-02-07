@@ -3,7 +3,8 @@ import torch
 from torch import nn, optim
 from tqdm import tqdm
 from transformers import get_linear_schedule_with_warmup
-from BERT.util import data_utils
+from util.bert import data_utils
+
 
 def train(model, x, y, max_epoch=10, lr=3e-5, batch_size=8, val=None, outputdir=None):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
