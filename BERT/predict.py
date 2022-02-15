@@ -2,7 +2,7 @@ import torch
 import json
 import numpy as np
 from transformers import BertJapaneseTokenizer, BertForTokenClassification
-from BERT.util import data_utils
+from BERT.util import data_utils, bert_utils
 
 
 def load_model(model, model_dir):
@@ -18,6 +18,13 @@ def load_model(model, model_dir):
 
     return model, tokenizer, id2label
 
+def predict_from_sentences_list(sentences, model, tokenizer, vocabulary, device):
+    sentences_embeddings = bert_utils.prepare_sentences(sentences, tokenizer)
+    tags = predict(model, sentences_embeddings, device=device)
+    labels = convert_prediction_to_labels(tags, vocabulary)
+    sentences = [tokenizer.convert_ids_to_tokens(t)[1:] for t in sentences_embeddings]
+    labels = remove_label_padding(sentences, labels)
+    return sentences, labels
 
 def predict(model, x, device=None):
     if device is None:

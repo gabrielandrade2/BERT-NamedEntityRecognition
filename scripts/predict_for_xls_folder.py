@@ -1,10 +1,11 @@
 import glob
+import os
 import re
 import pandas as pd
 
 from BERT.predict import *
-from util.ade_table_utils import *
 from BERT.util import bert_utils
+from util import iob_util
 
 
 def get_drug(drugs, rownum):
@@ -25,9 +26,15 @@ if __name__ == '__main__':
 
     # Get file list
     DIRECTORY = "../data/Croudworks薬歴/"
+    output_dir = "../data/Croudworks薬歴/tagged"
+    try:
+        os.mkdir(output_dir)
+    except FileExistsError:
+        pass
+
     file_list = glob.glob(DIRECTORY + '[!~]*.xlsx')
 
-    output_dict = {}
+    should_normalize_entities = True
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -36,6 +43,10 @@ if __name__ == '__main__':
 
         print('\nFile', i + 1, 'of', len(file_list))
         print(file)
+
+        output_filename = output_dir + "/" + file.split("/")[-1].replace("xlsx", "txt")
+        output_file = open(output_filename, "w+")
+        print("Output file:", output_filename)
 
         xls = pd.ExcelFile(file)
         sheetX = xls.parse(0)
@@ -49,6 +60,7 @@ if __name__ == '__main__':
         except KeyError:
             print("Sheet not found, Skipping file")
             continue
+
 
         # Skip the first item as it is the 例 line
         for text_num in range(1, len(texts)):
@@ -67,13 +79,13 @@ if __name__ == '__main__':
             # Apply the model to extract symptoms
             sentences = text.split('\n')
             sentences, labels = predict_from_sentences_list(sentences, model, tokenizer, vocabulary, device)
-            ne_dict = convert_labels_to_dict(sentences, labels)
-            ne_dict = normalize_entities(ne_dict)
 
-            # Consolidate results in output variable
-            output_dict = consolidate_table_data(drug, output_dict, ne_dict)
+            tagged_sentences = list()
+            for sent, label in zip(sentences, labels):
+                tagged_sentences.append(iob_util.convert_iob_to_xml(sent, label))
+            output_file.write("Text " + str(text_num) + "\n\n")
+            output_file.write("\n".join(tagged_sentences))
+            output_file.write("\n\n\n")
+
         print('')
-
-    output_table = pd.DataFrame.from_dict(output_dict, orient='index').fillna(0)
-    output_table = table_post_process(output_table)
-    output_table.to_excel('../data/output-from-xls-folder.xlsx')
+        output_file.close()
