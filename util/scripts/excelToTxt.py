@@ -34,7 +34,7 @@ def excelToTxt(directory, drugDict):
                 continue
 
             # Add \n after "。" which do not already have it
-                text = re.sub('。(?=[^\n])', "。\n", text)
+            text = re.sub('。(?=[^\n])', "。\n", text)
 
             # In case it is empty, iterate back until we find the last drug listed
             i = 0

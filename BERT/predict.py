@@ -18,9 +18,11 @@ def load_model(model, model_dir):
 
     return model, tokenizer, id2label
 
-def predict(model, x):
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    print('device: ' + device)
+
+def predict(model, x, device=None):
+    if device is None:
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        print('device: ' + device)
 
     data = data_utils.Batch(x, x, batch_size=8, sort=False)
 
@@ -31,7 +33,7 @@ def predict(model, x):
 
     for sent, _, _ in data:
         sent = torch.tensor(sent).to(device)
-        mask = [[float(i>0) for i in ii] for ii in sent]
+        mask = [[float(i > 0) for i in ii] for ii in sent]
         mask = torch.tensor(mask).to(device)
 
         output = model(sent, attention_mask=mask)
@@ -41,8 +43,10 @@ def predict(model, x):
 
     return res
 
+
 def convert_prediction_to_labels(prediction, vocabulary):
     return [[vocabulary[t] for t in tag] for tag in prediction]
+
 
 def remove_label_padding(sentences, labels):
     new_labels = list()
