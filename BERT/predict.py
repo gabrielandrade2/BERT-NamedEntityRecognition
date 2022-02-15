@@ -2,7 +2,7 @@ import torch
 import json
 import numpy as np
 from transformers import BertJapaneseTokenizer, BertForTokenClassification
-from util.bert import data_utils
+from BERT.util import data_utils
 
 
 def load_model(model, model_dir):

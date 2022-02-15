@@ -1,10 +1,9 @@
 import glob
 
 import pandas as pd
-from utils import *
+from util.ade_table_utils import *
 from BERT.predict import *
-from util.bert import bert_utils, iob_util
-
+from BERT.util import bert_utils
 
 if __name__ == '__main__':
     # Load BERT model

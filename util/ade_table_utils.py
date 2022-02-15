@@ -1,5 +1,5 @@
 from dnorm_j import DNorm
-from util.bert import iob_util
+from util import iob_util
 
 
 def convert_labels_to_dict(sentences, labels):
@@ -10,7 +10,7 @@ def convert_labels_to_dict(sentences, labels):
 
 def normalize_entities(named_entities):
     normalized_entities = list()
-    normalization_model =   DNorm.from_pretrained()
+    normalization_model = DNorm.from_pretrained()
     for entry in named_entities:
         entry['normalized_word'] = normalization_model.normalize(entry['word'])
         normalized_entities.append(entry)

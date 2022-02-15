@@ -4,9 +4,9 @@ import pandas as pd
 import umls_api
 
 from BERT.predict import load_model, predict
-from util.bert import iob_util
-from util.bert.bert_utils import normalize_dataset
-from util.bert.xml_parser import xml_to_articles, __preprocessing, split_sentences, drop_texts_with_mismatched_tags, \
+from util import iob_util
+from BERT.util.bert_utils import normalize_dataset
+from util.xml_parser import xml_to_articles, __preprocessing, split_sentences, drop_texts_with_mismatched_tags, \
     convert_xml_to_iob_list
 from seqeval.metrics import accuracy_score, f1_score, precision_score, classification_report
 from seqeval.scheme import IOB2

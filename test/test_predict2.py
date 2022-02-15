@@ -2,10 +2,10 @@ import pandas as pd
 from lxml.etree import XMLSyntaxError
 
 from BERT.predict import load_model, predict
-from util.bert import iob_util
-from util.bert.bert_utils import normalize_dataset
-from util.bert.iob_util import convert_xml_to_iob
-from util.bert.xml_parser import __preprocessing, split_sentences, drop_texts_with_mismatched_tags
+from util import iob_util
+from BERT.util.bert_utils import normalize_dataset
+from util.iob_util import convert_xml_to_iob
+from util.xml_parser import __preprocessing, split_sentences, drop_texts_with_mismatched_tags
 from seqeval.metrics import accuracy_score, f1_score, precision_score, classification_report
 from seqeval.scheme import IOB2
 

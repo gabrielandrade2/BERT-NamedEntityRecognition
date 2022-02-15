@@ -3,7 +3,7 @@ import pandas as pd
 
 from xml.dom import minidom
 from lxml.etree import XMLSyntaxError, XMLParser
-from util.bert.iob_util import convert_xml_to_iob
+from util.iob_util import convert_xml_to_iob
 
 
 def xml_to_articles(file):

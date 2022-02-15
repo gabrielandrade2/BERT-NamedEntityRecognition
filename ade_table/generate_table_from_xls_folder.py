@@ -3,8 +3,8 @@ import re
 import pandas as pd
 
 from BERT.predict import *
-from utils import *
-from util.bert import bert_utils
+from util.ade_table_utils import *
+from BERT.util import bert_utils
 
 
 def get_drug(drugs, rownum):
@@ -28,6 +28,7 @@ if __name__ == '__main__':
     file_list = glob.glob(DIRECTORY + '[!~]*.xlsx')
 
     output_dict = {}
+    full_ne_dict = list()
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -72,6 +73,7 @@ if __name__ == '__main__':
             labels = remove_label_padding(sentences, labels)
             ne_dict = convert_labels_to_dict(sentences, labels)
             ne_dict = normalize_entities(ne_dict)
+            full_ne_dict.append(ne_dict)
 
             # Consolidate results in output variable
             output_dict = consolidate_table_data(drug, output_dict, ne_dict)
