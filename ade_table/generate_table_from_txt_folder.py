@@ -1,6 +1,8 @@
 import glob
 
 import pandas as pd
+
+from BERT.util.bert_utils import load_model
 from util.ade_table_utils import *
 from BERT.predict import *
 from BERT.util import bert_utils

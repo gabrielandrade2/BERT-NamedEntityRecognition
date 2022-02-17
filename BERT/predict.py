@@ -1,22 +1,7 @@
 import torch
-import json
 import numpy as np
-from transformers import BertJapaneseTokenizer, BertForTokenClassification
 from BERT.util import data_utils, bert_utils
 
-
-def load_model(model, model_dir):
-    tokenizer = BertJapaneseTokenizer.from_pretrained(model)
-
-    with open(model_dir + '/label_vocab.json', 'r') as f:
-        label_vocab = json.load(f)
-    id2label = {v: k for k, v in label_vocab.items()}
-
-    model = BertForTokenClassification.from_pretrained(model, num_labels=len(label_vocab))
-    model_path = model_dir + '/final.model'
-    model.load_state_dict(torch.load(model_path))
-
-    return model, tokenizer, id2label
 
 def predict_from_sentences_list(sentences, model, tokenizer, vocabulary, device):
     sentences_embeddings = bert_utils.prepare_sentences(sentences, tokenizer)

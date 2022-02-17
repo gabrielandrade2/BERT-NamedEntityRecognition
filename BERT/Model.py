@@ -1,55 +1,26 @@
-import json
-import os
-import numpy as np
 import torch
-
-from sklearn.model_selection import train_test_split
 from torch import nn, optim
 from tqdm import tqdm
-from transformers import BertForTokenClassification, BertJapaneseTokenizer
 from transformers import get_linear_schedule_with_warmup
-from BERT.util import data_utils, bert_utils
-from util.xml_parser import convert_xml_to_iob_list
+
+from BERT.util import bert_utils, data_utils
 
 
-def train_from_xml_file(xmlFile, model_name, tag_list, output_dir):
-    ##### Load the data #####
-    sentences, tags = convert_xml_to_iob_list(xmlFile, tag_list, should_split_sentences=True)
-    return train_from_sentences_tags_list(sentences, tags, model_name, output_dir)
+class Model:
+    def __init__(self, pre_trained_model, tokenizer, vocabulary, device='cpu'):
+        self.model = pre_trained_model
+        self.tokenizer = tokenizer
+        self.vocabulary = vocabulary
+        self.device = device
+
+    def __init__(self, pre_trained_model, model_dir):
+        self.model, self.tokenizer, self.vocabulary = bert_utils.load_model(pre_trained_model, model_dir)
+
+def train(self, x, y, max_epoch=10, lr=3e-5, batch_size=8, val=None, outputdir=None):
+    model = self.model
+    device = self.device
 
 
-def train_from_sentences_tags_list(sentences, tags, model_name, output_dir):
-    try:
-        os.mkdir(output_dir)
-    except FileExistsError:
-        print("folder exists")
-
-    ##### Process dataset for BERT #####
-    tokenizer = BertJapaneseTokenizer.from_pretrained(model_name)
-
-    # Create vocabulary
-    label_vocab = bert_utils.create_label_vocab(tags)
-    with open(output_dir + '/label_vocab.json', 'w') as f:
-        json.dump(label_vocab, f, ensure_ascii=False)
-
-    ##### Split in train/validation #####
-    train_x, validation_x, train_y, validation_y = train_test_split(sentences, tags, test_size=0.2)
-
-    # Convert to BERT data model
-    train_x, train_y = bert_utils.dataset_to_bert_input(train_x, train_y, tokenizer, label_vocab)
-    validation_x, validation_y = bert_utils.dataset_to_bert_input(validation_x, validation_y, tokenizer, label_vocab)
-
-    # Get pre-trained model and fine-tune it
-    model_name = BertForTokenClassification.from_pretrained(model_name, num_labels=len(label_vocab))
-    model_name = train(model_name, train_x, train_y, val=[validation_x, validation_y], outputdir=output_dir)
-
-    #print(model)
-    return model_name
-
-
-def train(model, x, y, max_epoch=10, lr=3e-5, batch_size=8, val=None, outputdir=None):
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    print('device: ' + device)
     data = data_utils.Batch(x, y, batch_size=batch_size)
     if val is not None:
         val_data = data_utils.Batch(val[0], val[1], batch_size=batch_size)
@@ -117,13 +88,3 @@ def train(model, x, y, max_epoch=10, lr=3e-5, batch_size=8, val=None, outputdir=
 
     torch.save(model.state_dict(), outputdir+'/final.model')
     return model
-
-
-if __name__ == '__main__':
-
-    xmlFile = '../data/drugHistoryCheck.xml'
-    model = 'cl-tohoku/bert-base-japanese-char-v2'
-    tag_list = ['d']
-    output_dir = 'out'
-
-    train_from_xml_file(xmlFile, model, tag_list, output_dir)

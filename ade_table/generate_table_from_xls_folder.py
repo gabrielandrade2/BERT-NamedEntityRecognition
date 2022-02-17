@@ -3,8 +3,8 @@ import re
 import pandas as pd
 
 from BERT.predict import *
+from BERT.util.bert_utils import load_model
 from util.ade_table_utils import *
-from BERT.util import bert_utils
 
 
 def get_drug(drugs, rownum):

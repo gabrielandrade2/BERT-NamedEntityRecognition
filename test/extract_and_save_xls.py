@@ -3,7 +3,8 @@ import os
 import glob
 import mojimoji
 
-from BERT.predict import load_model, predict
+from BERT.predict import predict
+from BERT.util.bert_utils import load_model
 from util.iob_util import convert_iob_to_xml, convert_iob_to_dict
 
 if __name__ == '__main__':

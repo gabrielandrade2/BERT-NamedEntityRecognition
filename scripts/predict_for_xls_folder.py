@@ -4,7 +4,7 @@ import re
 import pandas as pd
 
 from BERT.predict import *
-from BERT.util import bert_utils
+from BERT.util.bert_utils import load_model
 from util import iob_util
 
 

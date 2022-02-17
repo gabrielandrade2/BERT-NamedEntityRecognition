@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" exclude=".svn;.cvs;.idea;.DS_Store;.git;.hg;*.hprof;*.pyc;venv" remoteFilesAllowedToDisappearOnAutoupload="false">
+  <component name="PublishConfigData" autoUpload="Always" serverName="gabriel-he@kohaku.naist.jp:22 password" createEmptyFolders="true" exclude=".svn;.cvs;.idea;.DS_Store;.git;.hg;*.hprof;*.pyc;venv*;BERT/out*;.gitignore" autoUploadExternalChanges="true">
     <serverData>
       <paths name="gabriel-he@kohaku.naist.jp:22 password">
         <serverdata>
           <mappings>
-            <mapping deploy="/tmp/pycharm_project_391" local="$PROJECT_DIR$" />
+            <mapping deploy="pycharm-upload/NER" local="$PROJECT_DIR$" />
           </mappings>
         </serverdata>
       </paths>
