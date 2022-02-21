@@ -9,12 +9,12 @@ from tqdm import tqdm
 from transformers import BertForTokenClassification, BertJapaneseTokenizer
 from transformers import get_linear_schedule_with_warmup
 from BERT.util import data_utils, bert_utils
-from util.xml_parser import convert_xml_to_iob_list
+from util.xml_parser import convert_xml_file_to_iob_list
 
 
 def train_from_xml_file(xmlFile, model_name, tag_list, output_dir):
     ##### Load the data #####
-    sentences, tags = convert_xml_to_iob_list(xmlFile, tag_list, should_split_sentences=True)
+    sentences, tags = convert_xml_file_to_iob_list(xmlFile, tag_list, should_split_sentences=True)
     return train_from_sentences_tags_list(sentences, tags, model_name, output_dir)
 
 

@@ -7,26 +7,14 @@ from BERT.predict import *
 from BERT.util.bert_utils import load_model
 from util import iob_util
 
-
-def get_drug(drugs, rownum):
-    # In case it is empty, iterate back until we find the last drug listed
-    i = 0
-    drug = ""
-    while not drug or drug == 'nan':
-        # get drug name
-        drug = str(drugs[rownum - i])
-        #drug = re.search(r'[一-龯ぁ-ゔゞァ-・ヽヾ゛゜ーA-zＡ-ｚ0-9０-９]*', drug).group()
-        i = i + 1
-    return drug
-
 if __name__ == '__main__':
     # Load BERT model
     MODEL = 'cl-tohoku/bert-base-japanese-char-v2'
-    model, tokenizer, vocabulary = load_model(MODEL, '../BERT/out')
+    model, tokenizer, vocabulary = load_model(MODEL, '../../BERT/out')
 
     # Get file list
-    DIRECTORY = "../data/Croudworks薬歴/"
-    output_dir = "../data/Croudworks薬歴/tagged"
+    DIRECTORY = "../../data/Croudworks薬歴/"
+    output_dir = "../../data/Croudworks薬歴/tagged"
     try:
         os.mkdir(output_dir)
     except FileExistsError:
@@ -73,8 +61,6 @@ if __name__ == '__main__':
 
             # Add \n after "。" which do not already have it
             text = re.sub('。(?=[^\n])', "。\n", text)
-
-            drug = get_drug(drugs, text_num)
 
             # Apply the model to extract symptoms
             sentences = text.split('\n')

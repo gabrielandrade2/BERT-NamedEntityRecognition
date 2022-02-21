@@ -1,6 +1,8 @@
 from dnorm_j import DNorm
 from util import iob_util
-
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 def convert_labels_to_dict(sentences, labels):
     ne_dict = list()
@@ -43,3 +45,14 @@ def table_post_process(table):
     table = table[table.sum(0).sort_values(ascending=False)[:50].index]
 
     return table
+
+def generate_heatmap(table):
+    mpl.rc('font', family="Hiragino Sans")
+    sns.set(font='Hiragino Sans')
+    sns.color_palette("YlOrBr", as_cmap=True)
+    plt.figure(figsize=(20, 20))
+    heatmap = sns.heatmap(table)
+    heatmap.figure.tight_layout()
+    fig = heatmap.get_figure()
+    fig.savefig("out.png")
+    plt.show()

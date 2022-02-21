@@ -24,7 +24,9 @@ Gabriel Andrade modifications:
 
 
 import lxml.etree as etree
-
+from lxml.etree import XMLSyntaxError
+from seqeval.metrics import accuracy_score, f1_score, precision_score, classification_report
+from seqeval.scheme import IOB2
 
 def split_tag(tag):
     if tag == "O":
@@ -212,7 +214,7 @@ def convert_taglist_to_iob(sent, label, tokenizer=list):
     return results
 
 
-def convert_xml_to_iob(sent, tag_list=None, attr=None, tokenizer=list, ignore_mismatch_tags=True):
+def convert_xml_text_to_iob(sent, tag_list=None, attr=None, tokenizer=list, ignore_mismatch_tags=True):
     """Convert xml to iob.
 
     Convert xml to IOB2 format. You can limit valid tag and attribute.
@@ -230,6 +232,56 @@ def convert_xml_to_iob(sent, tag_list=None, attr=None, tokenizer=list, ignore_mi
     res, label = convert_xml_to_taglist(sent, tag_list=tag_list, attr=attr, ignore_mismatch_tags=ignore_mismatch_tags)
     iob = convert_taglist_to_iob(res, label, tokenizer=tokenizer)
     return [item for item in iob if item[0] != '\n']
+
+
+def convert_xml_text_list_to_iob_list(texts, tag_list, ignore_mismatch_tags=True, print_failed_sentences=False):
+    """Convert a list of texts with xml tags into iob list format.
+
+    :param texts: List of xml texts (List(str))
+    :param tag_list: List of tags to be extracted (List(str))
+    :param ignore_mismatch_tags: Should it try to recover if tags are missing?
+    :param print_failed_sentences: Should it print the failed sentences for debug purposes?
+    :return:
+    """
+    items = list()
+    tags = list()
+    i = 0
+    for t in texts:
+        sent = list()
+        tag = list()
+        try:
+            iob = convert_xml_text_to_iob(t, tag_list, ignore_mismatch_tags=ignore_mismatch_tags)
+            # Convert tuples into lists
+            for item in iob:
+                if item[0] == ' ':
+                    continue
+                sent.append(item[0])
+                tag.append(item[1])
+            items.append(sent)
+            tags.append(tag)
+        except XMLSyntaxError:
+            if print_failed_sentences:
+                print("Skipping text with xml syntax error, id: " + str(i))
+                print(t)
+        i = i + 1
+    return items, tags
+
+
+def evaluate_performance(original_labels, predict_labels):
+    ##### Insanity check #####
+    assert __list_size(original_labels) == __list_size(predict_labels)
+
+    ###### Calculate perfromance metrics #####
+
+    print('Accuracy: ' + str(accuracy_score(original_labels, predict_labels)))
+    print('Precision: ' + str(precision_score(original_labels, predict_labels)))
+    print('F1 score: ' + str(f1_score(original_labels, predict_labels)))
+    # print(classification_report(original_labels, labels))
+    print(classification_report(original_labels, predict_labels, mode='strict', scheme=IOB2))
+
+
+def __list_size(list):
+    return sum([len(t) for t in list])
 
 def print_iob(iob):
     for t, l in iob:

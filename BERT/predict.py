@@ -4,6 +4,7 @@ from BERT.util import data_utils, bert_utils
 
 
 def predict_from_sentences_list(sentences, model, tokenizer, vocabulary, device):
+    #isinstance()
     sentences_embeddings = bert_utils.prepare_sentences(sentences, tokenizer)
     tags = predict(model, sentences_embeddings, device=device)
     labels = convert_prediction_to_labels(tags, vocabulary)

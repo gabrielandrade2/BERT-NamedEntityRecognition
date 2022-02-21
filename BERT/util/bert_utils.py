@@ -125,6 +125,7 @@ def load_model(model, model_dir):
 
     model = BertForTokenClassification.from_pretrained(model, num_labels=len(label_vocab))
     model_path = model_dir + '/final.model'
-    model.load_state_dict(torch.load(model_path))
+    device = torch.device('cpu')
+    model.load_state_dict(torch.load(model_path, map_location=device))
 
     return model, tokenizer, id2label
