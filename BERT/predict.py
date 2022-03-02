@@ -12,12 +12,18 @@ def predict_from_sentences_list(sentences, model, tokenizer, vocabulary, device)
     labels = remove_label_padding(sentences, labels)
     return sentences, labels
 
+def __find_max_list(list):
+    list_len = [len(i) for i in list]
+    return max(list_len)
+
 def predict(model, x, device=None):
     if device is None:
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         print('device: ' + device)
 
-    data = data_utils.Batch(x, x, batch_size=8, sort=False)
+    max_size = __find_max_list(x)
+
+    data = data_utils.Batch(x, x, batch_size=8, sort=False, max_size=max_size)
 
     model.to(device)
     model.eval()
