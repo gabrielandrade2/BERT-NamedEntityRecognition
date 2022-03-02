@@ -1,16 +1,16 @@
 import glob
 
 import pandas as pd
+import torch
 
-from BERT.util.bert_utils import load_model
-from util.ade_table_utils import *
+from BERT import bert_utils
+from BERT.Model import NERModel
 from BERT.predict import *
-from BERT.util import bert_utils
+from util.ade_table_utils import *
 
 if __name__ == '__main__':
     # Load BERT model
-    MODEL = 'cl-tohoku/bert-base-japanese-char-v2'
-    model, tokenizer, vocabulary = load_model(MODEL, '../out')
+    model = NERModel.load_transformers_model('cl-tohoku/bert-base-japanese-char-v2', '../out/out_IM_v6')
 
     # Get file list
     DIRECTORY = "../data/Croudworks薬歴/txt-jp-drug/"
@@ -33,8 +33,11 @@ if __name__ == '__main__':
         # ['ID', 'Drug', 'Adverse Event', 'Place'])  # ID,  薬剤名, 有害事象, 想定した服薬指導実施場所
 
         # Apply the model to extract symptoms
+        tokenizer = model.tokenizer
+        vocabulary = model.vocabulary
+
         sentences_embeddings = bert_utils.prepare_sentences(lines[1:], tokenizer)
-        tags = predict(model, sentences_embeddings, device=device)
+        tags = model.predict(sentences_embeddings)
         labels = convert_prediction_to_labels(tags, vocabulary)
         sentences = [tokenizer.convert_ids_to_tokens(t)[1:] for t in sentences_embeddings]
         labels = remove_label_padding(sentences, labels)

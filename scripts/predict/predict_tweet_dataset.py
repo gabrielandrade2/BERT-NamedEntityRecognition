@@ -2,23 +2,23 @@ import glob
 import os
 
 import pandas as pd
+import torch
 
+from BERT.Model import NERModel
+from BERT.bert_utils import normalize_dataset
 from BERT.predict import *
-from BERT.util.bert_utils import load_model, normalize_dataset
 from util import iob_util
 
 if __name__ == '__main__':
     # Load BERT model
-    MODEL = 'cl-tohoku/bert-base-japanese-char-v2'
-    model, tokenizer, vocabulary = load_model(MODEL, '../../out_IM_v6')
+    model = NERModel.load_transformers_model('cl-tohoku/bert-base-japanese-char-v2', '../../out/finetunedmodel')
+    tokenizer = model.tokenizer
+    vocabulary = model.vocabulary
 
     # Get file list
     DIRECTORY = "../../data/2021-tweet副作用/"
     output_dir = "../../data/2021-tweet副作用/tagged"
-    try:
-        os.mkdir(output_dir)
-    except FileExistsError:
-        pass
+    os.makedirs(output_dir, exist_ok=True)
 
     file_list = glob.glob(DIRECTORY + '[!~]*.csv')
 
@@ -42,7 +42,7 @@ if __name__ == '__main__':
         output_file = open(output_filename, "w+")
         print("Output file:", output_filename)
 
-        csv = pd.read_csv(file, sep='^([^,]+),', header=None)
+        csv = pd.read_csv(file, sep='^([^,]+),', engine='python', header=None)
         # Get relevant columns
         texts = csv[2].to_list()
 
@@ -94,7 +94,7 @@ if __name__ == '__main__':
             # sentences, labels = predict_from_sentences_list(sentences, model, tokenizer, vocabulary, device)
 
             sentences_embeddings = [tokenizer.convert_tokens_to_ids(['[CLS]'] + t) for t in original_sentences]
-            tags = predict(model, sentences_embeddings, device=device)
+            tags = model.predict(sentences_embeddings)
             labels = convert_prediction_to_labels(tags, vocabulary)
             sentences = [tokenizer.convert_ids_to_tokens(t)[1:] for t in sentences_embeddings]
             labels = remove_label_padding(sentences, labels)

@@ -1,12 +1,6 @@
 """ BERT Tags"""
-import json
-
-import torch
-from transformers import BertJapaneseTokenizer, BertForTokenClassification
-
 __CLS_TAG = '[CLS]'
 __PAD_TAG = '[PAD]'
-
 
 def normalize_dataset(sentences, tags, tokenizer):
     """ Use the tokenizer to apply the same normalization applied to full strings to a pre-tokenized dataset. It also
@@ -114,18 +108,3 @@ def prepare_sentences(sentences, tokenizer):
     """
     tokenized_sentences = [tokenizer.tokenize(t) for t in sentences]
     return [tokenizer.convert_tokens_to_ids(['[CLS]'] + t) for t in tokenized_sentences]
-
-
-def load_model(model, model_dir):
-    tokenizer = BertJapaneseTokenizer.from_pretrained(model)
-
-    with open(model_dir + '/label_vocab.json', 'r') as f:
-        label_vocab = json.load(f)
-    id2label = {v: k for k, v in label_vocab.items()}
-
-    model = BertForTokenClassification.from_pretrained(model, num_labels=len(label_vocab))
-    model_path = model_dir + '/final.model'
-    device = torch.device('cpu')
-    model.load_state_dict(torch.load(model_path, map_location=device))
-
-    return model, tokenizer, id2label

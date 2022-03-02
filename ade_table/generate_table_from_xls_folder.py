@@ -1,9 +1,11 @@
 import glob
 import re
-import pandas as pd
 
+import pandas as pd
+import torch
+
+from BERT.Model import NERModel
 from BERT.predict import *
-from BERT.util.bert_utils import load_model
 from util.ade_table_utils import *
 
 
@@ -20,8 +22,7 @@ def get_drug(drugs, rownum):
 
 if __name__ == '__main__':
     # Load BERT model
-    MODEL = 'cl-tohoku/bert-base-japanese-char-v2'
-    model, tokenizer, vocabulary = load_model(MODEL, '../out_IM_v6')
+    model = NERModel.load_transformers_model('cl-tohoku/bert-base-japanese-char-v2', '../out/out_IM_v6')
 
     # Get file list
     DIRECTORY = "../data/Croudworks薬歴/"
@@ -66,7 +67,7 @@ if __name__ == '__main__':
 
             # Apply the model to extract symptoms
             sentences = text.split('\n')
-            sentences, labels = predict_from_sentences_list(sentences, model, tokenizer, vocabulary, device)
+            sentences, labels = predict_from_sentences_list(model, sentences)
             ne_dict = convert_labels_to_dict(sentences, labels)
             ne_dict = normalize_entities(ne_dict)
 

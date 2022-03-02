@@ -3,8 +3,7 @@ import os
 import glob
 import mojimoji
 
-from BERT.predict import predict
-from BERT.util.bert_utils import load_model
+from BERT.Model import NERModel
 from util.iob_util import convert_iob_to_xml, convert_iob_to_dict
 
 if __name__ == '__main__':
@@ -13,8 +12,11 @@ if __name__ == '__main__':
     file_list = glob.glob(directory + '*.xlsx')
 
     # load model
-    MODEL = 'cl-tohoku/bert-base-japanese-char-v2'
-    model, tokenizer, id2label = load_model(MODEL, '../out')
+    model_name = 'cl-tohoku/bert-base-japanese-char-v2'
+    model = NERModel.load_transformers_model(model_name, '../../out')
+
+    tokenizer = model.tokenizer
+    vocabulary = model.vocabulary
 
     MAX_LENGTH = 512
 
@@ -51,8 +53,8 @@ if __name__ == '__main__':
         data_x = [tokenizer.convert_tokens_to_ids(['[CLS]'] + t) for t in texts]
 
         # Extract drug names
-        tags = predict(model, data_x)
-        labels = [[id2label[t] for t in tag] for tag in tags]
+        tags = model.predict(data_x)
+        labels = [[vocabulary[t] for t in tag] for tag in tags]
         data_x = [tokenizer.convert_ids_to_tokens(t)[1:] for t in data_x]
 
         # for x, t in zip(data_x, labels):

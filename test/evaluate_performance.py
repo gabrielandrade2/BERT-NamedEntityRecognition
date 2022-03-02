@@ -4,8 +4,8 @@ import pandas as pd
 from seqeval.metrics import accuracy_score, f1_score, precision_score, classification_report
 from seqeval.scheme import IOB2
 
-from BERT.predict import predict
-from BERT.util.bert_utils import normalize_dataset, load_model
+from BERT.Model import NERModel
+from BERT.bert_utils import normalize_dataset
 from util.text_utils import split_sentences, preprocessing
 from util.xml_parser import xml_to_articles, drop_texts_with_mismatched_tags, \
     convert_xml_file_to_iob_list
@@ -20,8 +20,10 @@ def flatten_list(list):
 
 if __name__ == '__main__':
     ##### Load model #####
-    MODEL = 'cl-tohoku/bert-base-japanese-char-v2'
-    model, tokenizer, id2label = load_model(MODEL, '../out')
+    model = NERModel.load_transformers_model('cl-tohoku/bert-base-japanese-char-v2', '../out/out')
+    tokenizer = model.tokenizer
+    vocabulary = model.vocabulary
+
     TAG_LIST = ['d']
 
     #### Load data #####
@@ -46,8 +48,8 @@ if __name__ == '__main__':
     original_sentences, original_labels = normalize_dataset(original_sentences, original_labels, tokenizer)
 
     ##### Extract drug names #####
-    tags = predict(model, data_x)
-    labels = [[id2label[t] for t in tag] for tag in tags]
+    tags = model.predict(data_x)
+    labels = [[vocabulary[t] for t in tag] for tag in tags]
     data_x = [tokenizer.convert_ids_to_tokens(t)[1:] for t in data_x]
 
     # Remove pad tags from labels

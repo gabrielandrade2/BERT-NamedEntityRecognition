@@ -1,22 +1,22 @@
-import os
 import glob
-import mojimoji
-import xlrd
+import os
 import re
+
+import mojimoji
 import pandas as pd
+import xlrd
+
 
 def normalizeText(text):
     text = mojimoji.zen_to_han(text, kana=False)
     return re.search(r'[一-龯ぁ-ゔゞァ-・ヽヾ゛゜ーA-z -]*', text).group()
 
+
 def excelToTxt(directory, drugDict):
     # Load the model and file list
     file_list = glob.glob(directory + '/*.xlsx')
     folder = os.path.join(directory, "txt-jp-drug")
-    try:
-        os.mkdir(folder)
-    except FileExistsError:
-        print("folder exists")
+    os.makedirs(folder, exist_ok=True)
     count = 1
 
     for file in file_list:

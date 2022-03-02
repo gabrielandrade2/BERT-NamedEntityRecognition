@@ -1,12 +1,15 @@
 import pandas as pd
 import torch
 
-from BERT.predict import predict, convert_prediction_to_labels, remove_label_padding
-from BERT.util.bert_utils import load_model
+from BERT.Model import NERModel
+from BERT.predict import convert_prediction_to_labels, remove_label_padding
 from util import iob_util, text_utils
 
 
 def predict_list(texts, filename):
+    tokenizer = model.tokenizer
+    vocabulary = model.vocabulary
+
     output_file = open(filename, 'w')
     output_file.write("<articles>\n")
     split_texts = text_utils.split_sentences(texts, False)
@@ -17,7 +20,7 @@ def predict_list(texts, filename):
         try:
             tokenized_texts = [tokenizer.tokenize(t) for t in text]
             sentences_embeddings = [tokenizer.convert_tokens_to_ids(['[CLS]'] + t) for t in tokenized_texts]
-            tags = predict(model, sentences_embeddings, device=device)
+            tags = model.predict(sentences_embeddings)
             labels = convert_prediction_to_labels(tags, vocabulary)
             sentences = [tokenizer.convert_ids_to_tokens(t)[1:] for t in sentences_embeddings]
             labels = remove_label_padding(sentences, labels)
@@ -35,8 +38,8 @@ def predict_list(texts, filename):
 
 if __name__ == '__main__':
     # Load BERT model
-    MODEL = 'cl-tohoku/bert-base-japanese-char-v2'
-    model, tokenizer, vocabulary = load_model(MODEL, '../../out_IM_v6')
+    model_name = 'cl-tohoku/bert-base-japanese-char-v2'
+    model = NERModel.load_transformers_model(model_name, '../../out/out_IM_v6')
 
     # Load files
     input_file = "../../data/yc_統合_2014_2020.csv"
