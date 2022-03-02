@@ -36,7 +36,7 @@ def predict_list(texts, filename):
 if __name__ == '__main__':
     # Load BERT model
     MODEL = 'cl-tohoku/bert-base-japanese-char-v2'
-    model, tokenizer, vocabulary = load_model(MODEL, '../../BERT/out_IM_v6')
+    model, tokenizer, vocabulary = load_model(MODEL, '../../out_IM_v6')
 
     # Load files
     input_file = "../../data/yc_統合_2014_2020.csv"

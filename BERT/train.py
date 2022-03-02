@@ -124,6 +124,6 @@ if __name__ == '__main__':
     xmlFile = '../data/drugHistoryCheck.xml'
     model = 'cl-tohoku/bert-base-japanese-char-v2'
     tag_list = ['d']
-    output_dir = 'out'
+    output_dir = '../out'
 
     train_from_xml_file(xmlFile, model, tag_list, output_dir)

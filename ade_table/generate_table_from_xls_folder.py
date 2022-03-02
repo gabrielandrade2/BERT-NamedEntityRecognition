@@ -21,7 +21,7 @@ def get_drug(drugs, rownum):
 if __name__ == '__main__':
     # Load BERT model
     MODEL = 'cl-tohoku/bert-base-japanese-char-v2'
-    model, tokenizer, vocabulary = load_model(MODEL, '../BERT/out_IM_v6')
+    model, tokenizer, vocabulary = load_model(MODEL, '../out_IM_v6')
 
     # Get file list
     DIRECTORY = "../data/Croudworks薬歴/"

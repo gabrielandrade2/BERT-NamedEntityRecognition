@@ -10,7 +10,7 @@ from util import iob_util
 if __name__ == '__main__':
     # Load BERT model
     MODEL = 'cl-tohoku/bert-base-japanese-char-v2'
-    model, tokenizer, vocabulary = load_model(MODEL, '../../BERT/out')
+    model, tokenizer, vocabulary = load_model(MODEL, '../../out')
 
     # Get file list
     DIRECTORY = "../../data/Croudworks薬歴/"

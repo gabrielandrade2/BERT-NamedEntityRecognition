@@ -21,7 +21,7 @@ def flatten_list(list):
 if __name__ == '__main__':
     ##### Load model #####
     MODEL = 'cl-tohoku/bert-base-japanese-char-v2'
-    model, tokenizer, id2label = load_model(MODEL, '../BERT/out')
+    model, tokenizer, id2label = load_model(MODEL, '../out')
     TAG_LIST = ['d']
 
     #### Load data #####

@@ -5,11 +5,9 @@
       <excludeFolder url="file://$MODULE_DIR$/venv" />
       <excludeFolder url="file://$MODULE_DIR$/data" />
       <excludeFolder url="file://$MODULE_DIR$/old" />
-      <excludeFolder url="file://$MODULE_DIR$/BERT/out" />
       <excludeFolder url="file://$MODULE_DIR$/venv-3.9" />
       <excludeFolder url="file://$MODULE_DIR$/models_backup" />
       <excludeFolder url="file://$MODULE_DIR$/venv86" />
-      <excludeFolder url="file://$MODULE_DIR$/BERT/out_IM_v6" />
       <excludeFolder url="file://$MODULE_DIR$/out" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.8 (venv)" jdkType="Python SDK" />

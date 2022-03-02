@@ -27,4 +27,4 @@ if __name__ == '__main__':
     #     texts[i] = text
 
     sentences, tags = convert_xml_text_list_to_iob_list(texts, tag_list, ignore_mismatch_tags=True, print_failed_sentences=True)
-    model = train_from_sentences_tags_list(sentences, tags, model, '../../BERT/out_IM_v6')
+    model = train_from_sentences_tags_list(sentences, tags, model, '../../out_IM_v6')

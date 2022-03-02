@@ -154,3 +154,42 @@ def drop_texts_with_mismatched_tags(texts):
         except XMLSyntaxError:
             continue
     return no_mismatch
+
+
+# def entities_from_xml(file_name, attrs = False):#attrs=属性を考慮するか否か，考慮しないならFalse
+#     frequent_tags_attrs = select_tags(attrs)
+#     dict_tags = dict(zip(frequent_tags_attrs, tags_value))#type_id への変換用
+#     with codecs.open(file_name, "r", "utf-8") as file:
+#         soup = BeautifulSoup(file, "html.parser")
+#
+#     for elem_articles in soup.find_all("articles"):#articles内のarticleを一つずつ取り出す
+#         entities = []
+#         articles = []
+#         for elem in elem_articles.find_all('article'):#article内の要素を一つずつ取り出す
+#             entities_article = []
+#             text_list = []
+#             pos1 = 0
+#             pos2 = 0
+#             for child in elem:#取り出した要素に対して，一つずつ処理する
+#                 #（タグのないものについても要素として取得されるので，位置(pos)はずれない）
+#                 text = unicodedata.normalize('NFKC', child.string)#正規化
+#                 #text = text.replace('。', '.')#句点を'.'に統一, sentenceの分割に使うため．
+#                 pos2 += len(text)#終了位置を記憶
+#                 if child.name in frequent_tags:#特定のタグについて，固有表現の表現形，位置，タグを取得
+#                     attr = ""#属性を入れるため
+#                     if 'type' in child.attrs:#typeがある場合には
+#                         attr = child.attrs['type']
+#                     if 'certainty' in child.attrs:#certaintyがある場合には
+#                         attr = child.attrs['certainty']
+#                     if 'state' in child.attrs:#stateがある場合には
+#                         attr = child.attrs['state']
+#                     if not attrs:#attrs=属性を考慮するか否か，考慮しないならFalse
+#                         attr = ""
+#                     entities_article.append({'name':text, 'span':[pos1, pos2],\
+#                         'type_id':dict_tags[str(child.name)+'_'+str(attr)],\
+#                         'type':str(child.name)+'_'+str(attr)})
+#                 pos1 = pos2#次のentityの開始位置を設定
+#                 text_list.append(text)
+#             articles.append("".join(text_list))
+#             entities.append(entities_article)
+#     return articles, entities
