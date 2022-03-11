@@ -1,4 +1,7 @@
 import re
+from abc import abstractmethod, ABCMeta
+
+from thefuzz import fuzz
 
 
 def preprocessing(texts, remove_core_tag=True):
@@ -34,8 +37,8 @@ def split_sentences(texts, return_flat_list=True):
     processed_texts = list()
     for text in texts:
         processed_text = re.split(
-                    "(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=[.?!])\s\n*|(?<=[^A-zＡ-ｚ0-9０-９ ].)(?<=[。．.?？!！])(?![\.」])\n*", text)
-        #processed_text = re.split("(? <=[。?？!！])")  # In case only a simple regex is necessary
+            "(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=[.?!])\s\n*|(?<=[^A-zＡ-ｚ0-9０-９ ].)(?<=[。．.?？!！])(?![\.」])\n*", text)
+        # processed_text = re.split("(? <=[。?？!！])")  # In case only a simple regex is necessary
         processed_text = [x.strip() for x in processed_text]
         processed_text = [x for x in processed_text if x != '']
         if return_flat_list:
@@ -43,3 +46,14 @@ def split_sentences(texts, return_flat_list=True):
         else:
             processed_texts.append(processed_text)
     return processed_texts
+
+
+class EntityNormalizerInterface(metaclass=ABCMeta):
+
+    @abstractmethod
+    def normalize(self, term, matching_method=fuzz.token_set_ratio):
+        pass
+
+    @abstractmethod
+    def normalize_list(self, terms, matching_method=fuzz.token_set_ratio):
+        pass

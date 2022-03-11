@@ -2,8 +2,8 @@ import glob
 
 import pandas as pd
 import torch
+from dnorm_j import DNorm
 
-from BERT import bert_utils
 from BERT.Model import NERModel
 from BERT.predict import *
 from util.ade_table_utils import *
@@ -42,7 +42,7 @@ if __name__ == '__main__':
         sentences = [tokenizer.convert_ids_to_tokens(t)[1:] for t in sentences_embeddings]
         labels = remove_label_padding(sentences, labels)
         ne_dict = convert_labels_to_dict(sentences, labels)
-        ne_dict = normalize_entities(ne_dict)
+        ne_dict = normalize_entities(ne_dict, DNorm.from_pretrained())
 
         # Consolidate results in output variable
         drug = metadata[1]

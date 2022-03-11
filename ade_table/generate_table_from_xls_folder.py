@@ -1,11 +1,11 @@
 import glob
 import re
 
-import pandas as pd
 import torch
 
 from BERT.Model import NERModel
 from BERT.predict import *
+from knowledge_bases.meddra import *
 from util.ade_table_utils import *
 
 
@@ -31,6 +31,13 @@ if __name__ == '__main__':
     output_dict = {}
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+    database = MedDRADatabase('/Users/gabriel-he/Documents/git/meddra-sqlite/db/meddra.sqlite3')
+    database.open_connection()
+    normalization_model = MedDRAPatientFriendlyPTEntityNormalizer(
+        database,
+        MedDRAPatientFriendlyList('/Users/gabriel-he/Documents/MedDRA/patient-friendly_term_list_v24.1_J.xlsx')
+    )
 
     for i in range(len(file_list)):
         file = file_list[i]
@@ -69,7 +76,7 @@ if __name__ == '__main__':
             sentences = text.split('\n')
             sentences, labels = predict_from_sentences_list(model, sentences)
             ne_dict = convert_labels_to_dict(sentences, labels)
-            ne_dict = normalize_entities(ne_dict)
+            ne_dict = normalize_entities(ne_dict, normalization_model)
 
             # Consolidate results in output variable
             output_dict = consolidate_table_data(drug, output_dict, ne_dict)
@@ -77,6 +84,6 @@ if __name__ == '__main__':
 
     output_table = pd.DataFrame.from_dict(output_dict, orient='index').fillna(0)
     output_table = table_post_process(output_table)
-    output_table.to_excel('../data/output-from-xls-folder_IM_v6-not-normalized.xlsx')
+    output_table.to_excel('../data/output-from-xls-folder_IM_v6-meddra-full.xlsx')
 
     generate_heatmap(output_table)

@@ -1,8 +1,9 @@
-from dnorm_j import DNorm
-from util import iob_util
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import seaborn as sns
+
+from util import iob_util
+
 
 def convert_labels_to_dict(sentences, labels):
     ne_dict = list()
@@ -10,13 +11,14 @@ def convert_labels_to_dict(sentences, labels):
         ne_dict.extend(iob_util.convert_iob_to_dict(sent, label))
     return ne_dict
 
-def normalize_entities(named_entities):
+
+def normalize_entities(named_entities, normalization_model):
     normalized_entities = list()
-    normalization_model = DNorm.from_pretrained()
     for entry in named_entities:
-        entry['normalized_word'] = normalization_model.normalize(entry['word'])
+        entry['normalized_word'], _ = normalization_model.normalize(entry['word'])
         normalized_entities.append(entry)
     return normalized_entities
+
 
 def consolidate_table_data(drug, output_dict, ne_dict):
     if drug in output_dict:
