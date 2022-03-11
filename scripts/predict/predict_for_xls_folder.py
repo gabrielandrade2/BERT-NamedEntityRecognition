@@ -48,7 +48,6 @@ if __name__ == '__main__':
             print("Sheet not found, Skipping file")
             continue
 
-
         # Skip the first item as it is the 例 line
         for text_num in range(1, len(texts)):
             print('Text', text_num + 1, 'of', len(texts), end='\r')

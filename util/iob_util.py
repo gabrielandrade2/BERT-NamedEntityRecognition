@@ -22,17 +22,17 @@ Gabriel Andrade modifications:
     - Allow support for tags using 'i' (e.g. 'm-key')
 """
 
-
 import lxml.etree as etree
 from lxml.etree import XMLSyntaxError
 from seqeval.metrics import accuracy_score, f1_score, precision_score, classification_report
 from seqeval.scheme import IOB2
 
+
 def split_tag(tag):
     if tag == "O":
         return tag, None
     else:
-        t, l = tag.split('-',1)
+        t, l = tag.split('-', 1)
         return t, l
 
 
@@ -120,8 +120,8 @@ def convert_iob_to_xml(tokens, iobs):
     Convert tokens and IOB2 labels to xml format.
 
     Args:
-        tt (List): token list
-        ii (List): IOB2 label list
+        tokens (List): token list
+        iobs (List): IOB2 label list
 
     Returns:
         str: Xml output.
@@ -282,6 +282,7 @@ def evaluate_performance(original_labels, predict_labels):
 
 def __list_size(list):
     return sum([len(t) for t in list])
+
 
 def print_iob(iob):
     for t, l in iob:

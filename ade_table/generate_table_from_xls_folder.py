@@ -16,9 +16,10 @@ def get_drug(drugs, rownum):
     while not drug or drug == 'nan':
         # get drug name
         drug = str(drugs[rownum - i])
-        #drug = re.search(r'[一-龯ぁ-ゔゞァ-・ヽヾ゛゜ーA-zＡ-ｚ0-9０-９]*', drug).group()
+        # drug = re.search(r'[一-龯ぁ-ゔゞァ-・ヽヾ゛゜ーA-zＡ-ｚ0-9０-９]*', drug).group()
         i = i + 1
     return drug
+
 
 if __name__ == '__main__':
     # Load BERT model

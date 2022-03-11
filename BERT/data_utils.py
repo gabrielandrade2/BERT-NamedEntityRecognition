@@ -1,5 +1,6 @@
 import mojimoji
 
+
 def load_dataset(path):
     with open(path, 'r') as f:
         lines = f.read()
@@ -22,6 +23,7 @@ def load_dataset(path):
 
     return data, label
 
+
 def create_vocab(data):
     vocab = {}
     vocab["[PAD]"] = len(vocab)
@@ -34,6 +36,7 @@ def create_vocab(data):
 
     return vocab
 
+
 def create_label_vocab(label):
     vocab = {}
     vocab["[PAD]"] = len(vocab)
@@ -45,19 +48,24 @@ def create_label_vocab(label):
 
     return vocab
 
+
 def sent2input(sent, vocab):
     return [vocab[token] if token in vocab else vocab["[PAD]"] for token in sent]
+
 
 def data2input(data, vocab):
     return [sent2input(sent, vocab) for sent in data]
 
+
 def pad_sentence(sent, length, pad_value=0):
     return sent + [pad_value] * (length - len(sent)) if len(sent) <= length else sent[:length]
+
 
 def pad_sequence(seq, max_length=512, pad_value=0, issort=True):
     length = len(seq[0]) if issort else len(sorted(seq, key=lambda x: len(x), reverse=True)[0])
     max_length = min(length, max_length)
     return [pad_sentence(s, max_length, pad_value) for s in seq]
+
 
 class Batch(object):
     def __init__(self, data, label, batch_size=8, pad_value=0, max_size=512, device=None, sort=True):
@@ -68,7 +76,7 @@ class Batch(object):
         self.max_size = max_size
         self.device = device
         self.sort = sort
-    
+
     def __len__(self):
         return len(self.data)
 
@@ -81,7 +89,7 @@ class Batch(object):
 
         for i in range(0, len(data), self.batch_size):
             s_pos = i
-            e_pos = min(i+self.batch_size, len(data))
+            e_pos = min(i + self.batch_size, len(data))
 
             x = [d[0] for d in data[s_pos:e_pos]]
             l = [d[1] for d in data[s_pos:e_pos]]
@@ -90,6 +98,7 @@ class Batch(object):
             l = pad_sequence(l, self.max_size, pad_value=self.pad_value, issort=self.sort)
 
             yield x, l, length
+
 
 class Mydataset(object):
     def __init__(self, path, vocab=None, label_vocab=None, batch_size=8):
@@ -111,7 +120,7 @@ class Mydataset(object):
 
         for i in range(0, len(data), self.batch_size):
             s_pos = i
-            e_pos = min(i+self.batch_size, len(data))
+            e_pos = min(i + self.batch_size, len(data))
 
             x = [d[0] for d in data[s_pos:e_pos]]
             l = [d[1] for d in data[s_pos:e_pos]]
@@ -120,7 +129,6 @@ class Mydataset(object):
             l = pad_sequence(l, pad_value=self.label_vocab["[PAD]"])
 
             yield x, l, length
-
 
 
 if __name__ == "__main__":

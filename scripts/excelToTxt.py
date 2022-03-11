@@ -61,8 +61,7 @@ def excelToTxt(directory, drugDict):
             drug = drug.strip().replace(' ', '_')
             drug = re.sub(r'(?u)[^-\w.]', '', drug)
 
-
-            #Normalize metadata
+            # Normalize metadata
             id = f'{count:04d}'
             ade = normalizeText(row[4])
             local = normalizeText(row[5])
@@ -71,7 +70,7 @@ def excelToTxt(directory, drugDict):
             filename = id + "_" + drug + ".txt"
 
             # Convert text to NFKC standard
-            #text = mojimoji.han_to_zen(text, kana=False)
+            # text = mojimoji.han_to_zen(text, kana=False)
             # text_nfkc = text
 
             # When everything is okay, write the text to its own txt file
@@ -80,6 +79,7 @@ def excelToTxt(directory, drugDict):
                 f.write(text)
                 f.close()
             count = count + 1
+
 
 def loadDrugDict(dictFile):
     df = pd.read_csv(dictFile, sep=',', header=0)
@@ -92,9 +92,11 @@ def loadDrugDict(dictFile):
 
     return df
 
+
 def main():
     drugDict = loadDrugDict("/Users/gabriel-he/Documents/NAIST-PhD/HYAKUYAKU_FULL_v20210706.csv")
     print(drugDict)
     excelToTxt("../data/Croudworks薬歴", drugDict)
+
 
 main()

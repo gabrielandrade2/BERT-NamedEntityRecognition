@@ -6,14 +6,11 @@ import torch
 
 from BERT.Model import NERModel
 from BERT.bert_utils import normalize_dataset
-from BERT.predict import *
 from util import iob_util
 
 if __name__ == '__main__':
     # Load BERT model
-    model = NERModel.load_transformers_model('cl-tohoku/bert-base-japanese-char-v2', '../../out/finetunedmodel')
-    tokenizer = model.tokenizer
-    vocabulary = model.vocabulary
+    model = NERModel.load_transformers_model('cl-tohoku/bert-base-japanese-char-v2', '../../out/out_IM_v6')
 
     # Get file list
     DIRECTORY = "../../data/2021-tweet副作用/"
@@ -57,6 +54,7 @@ if __name__ == '__main__':
                 continue
 
             import mojimoji
+
             text = mojimoji.han_to_zen(text, ascii=False, digit=False)
 
             # text = text.replace('<C>', '<d>')
@@ -72,11 +70,11 @@ if __name__ == '__main__':
             l1.append(original_sentences)
             l2 = list()
             l2.append(original_labels)
-            original_sentences, original_labels = normalize_dataset(l1, l2, tokenizer)
+            original_sentences, original_labels = normalize_dataset(l1, l2, model.tokenizer)
             original_sentences_list.extend(original_sentences)
             original_labels_list.extend(original_labels)
 
-            #Remove tags
+            # Remove tags
             text = text.replace('<d>', '')
             text = text.replace('</d>', '')
             text = text.replace('<C>', '')
@@ -91,15 +89,9 @@ if __name__ == '__main__':
             # sentences = text.split('\n')
             sentences = list()
             sentences.append(text)
-            # sentences, labels = predict_from_sentences_list(sentences, model, tokenizer, vocabulary, device)
-
-            sentences_embeddings = [tokenizer.convert_tokens_to_ids(['[CLS]'] + t) for t in original_sentences]
-            tags = model.predict(sentences_embeddings)
-            labels = convert_prediction_to_labels(tags, vocabulary)
-            sentences = [tokenizer.convert_ids_to_tokens(t)[1:] for t in sentences_embeddings]
-            labels = remove_label_padding(sentences, labels)
-
-            predict_sentences_list.extend(sentences)
+            sentences_embeddings = [model.tokenizer.convert_tokens_to_ids(['[CLS]'] + t) for t in original_sentences]
+            labels = model.predict(sentences_embeddings)
+            sentences = model.convert_ids_to_tokens(sentences_embeddings)
             predict_labels_list.extend(labels)
 
             tagged_sentences = list()

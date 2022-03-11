@@ -99,6 +99,7 @@ def dataset_to_bert_input(data_x, data_y, tokenizer, vocabulary, add_tags=True):
 
     return bert_data_x, bert_data_y
 
+
 def prepare_sentences(sentences, tokenizer):
     """ Prepare sentences from model execution (tokenization + CLS tag addition).
 

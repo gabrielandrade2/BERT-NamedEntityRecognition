@@ -36,6 +36,7 @@ def consolidate_table_data(drug, output_dict, ne_dict):
     output_dict[drug] = drug_dict
     return output_dict
 
+
 def table_post_process(table):
     # Order drugs by number of ADE events
     table['sum_col'] = table.sum(axis=1)
@@ -47,6 +48,7 @@ def table_post_process(table):
     table = table[table.sum(0).sort_values(ascending=False)[:50].index]
 
     return table
+
 
 def generate_heatmap(table):
     mpl.rc('font', family="Hiragino Sans")

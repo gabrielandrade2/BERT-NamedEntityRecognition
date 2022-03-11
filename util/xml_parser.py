@@ -1,7 +1,8 @@
-import pandas as pd
-
 from xml.dom import minidom
+
+import pandas as pd
 from lxml.etree import XMLSyntaxError, XMLParser
+
 from util.iob_util import convert_xml_text_to_iob
 from util.text_utils import *
 
@@ -126,6 +127,7 @@ def convert_xml_file_to_iob_file(file, tag_list, out_file, ignore_mismatch_tags=
             except XMLSyntaxError:
                 print("Skipping sentence with xml syntax error")
 
+
 def __prepare_texts(file, should_split_sentences):
     """ Loads a file and applies all the preprocessing steps before format conversion.
 
@@ -154,7 +156,6 @@ def drop_texts_with_mismatched_tags(texts):
         except XMLSyntaxError:
             continue
     return no_mismatch
-
 
 # def entities_from_xml(file_name, attrs = False):#attrs=属性を考慮するか否か，考慮しないならFalse
 #     frequent_tags_attrs = select_tags(attrs)

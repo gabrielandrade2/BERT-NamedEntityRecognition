@@ -5,7 +5,6 @@ from seqeval.metrics import accuracy_score, f1_score, precision_score, classific
 from seqeval.scheme import IOB2
 
 from BERT.Model import NERModel
-from BERT.bert_utils import normalize_dataset
 from util.text_utils import split_sentences, preprocessing
 from util.xml_parser import xml_to_articles, drop_texts_with_mismatched_tags, \
     convert_xml_file_to_iob_list
@@ -14,21 +13,20 @@ from util.xml_parser import xml_to_articles, drop_texts_with_mismatched_tags, \
 def list_size(list):
     return sum([len(t) for t in list])
 
+
 def flatten_list(list):
     flat_list = [item for sublist in list for item in sublist]
     return flat_list
 
+
 if __name__ == '__main__':
     ##### Load model #####
-    model = NERModel.load_transformers_model('cl-tohoku/bert-base-japanese-char-v2', '../out/out')
-    tokenizer = model.tokenizer
-    vocabulary = model.vocabulary
-
+    model = NERModel.load_transformers_model('cl-tohoku/bert-base-japanese-char-v2', '../../out/out')
     TAG_LIST = ['d']
 
     #### Load data #####
     # Get clean articles from file to tag
-    xmlFile = '../data/drugHistoryCheck.xml'
+    xmlFile = '../../data/drugHistoryCheck.xml'
     texts = xml_to_articles(xmlFile)
     texts = preprocessing(texts)
     texts = split_sentences(texts)
@@ -41,16 +39,14 @@ if __name__ == '__main__':
 
     ##### Tokenize text for BERT #####
     # print(sum([len(t) for t in texts]))
-    texts = [tokenizer.tokenize(t) for t in texts]
-    data_x = [tokenizer.convert_tokens_to_ids(['[CLS]'] + t) for t in texts]
+    data_x = model.prepare_sentences(texts)
 
     # Normalize to same tokenization as BERT
-    original_sentences, original_labels = normalize_dataset(original_sentences, original_labels, tokenizer)
+    original_sentences, original_labels = model.normalize_tagged_dataset(original_sentences, original_labels)
 
     ##### Extract drug names #####
-    tags = model.predict(data_x)
-    labels = [[vocabulary[t] for t in tag] for tag in tags]
-    data_x = [tokenizer.convert_ids_to_tokens(t)[1:] for t in data_x]
+    labels = model.predict(data_x)
+    data_x = model.convert_ids_to_tokens(data_x)
 
     # Remove pad tags from labels
     labels = [sent_label[:len(sent)] for sent, sent_label in zip(data_x, labels)]
@@ -60,9 +56,14 @@ if __name__ == '__main__':
 
     ##### Save output iob file #####
     correct = 0
-    f = open("../out/iob_predict_" + xmlFile.split('/')[-1] + ".iob", 'w')
-    for original_sentence, original_sentence_label, output_sentence, predict_sentence_label in zip(original_sentences, original_labels, data_x, labels):
-        for original_char, original_char_label, output_char, predict_char_label in zip(original_sentence, original_sentence_label, output_sentence, predict_sentence_label):
+    f = open("../../out/iob_predict_" + xmlFile.split('/')[-1] + ".iob", 'w')
+    for original_sentence, original_sentence_label, output_sentence, predict_sentence_label in zip(original_sentences,
+                                                                                                   original_labels,
+                                                                                                   data_x, labels):
+        for original_char, original_char_label, output_char, predict_char_label in zip(original_sentence,
+                                                                                       original_sentence_label,
+                                                                                       output_sentence,
+                                                                                       predict_sentence_label):
             line = original_char + '\t' + original_char_label + '\t' + output_char + '\t' + predict_char_label + '\n'
             f.write(line)
             if original_char_label == predict_char_label:
@@ -74,7 +75,7 @@ if __name__ == '__main__':
     print('Accuracy: ' + str(accuracy_score(original_labels, labels)))
     print('Precision: ' + str(precision_score(original_labels, labels)))
     print('F1 score: ' + str(f1_score(original_labels, labels)))
-    #print(classification_report(original_labels, labels))
+    # print(classification_report(original_labels, labels))
     print(classification_report(original_labels, labels, mode='strict', scheme=IOB2))
 
     output = pd.DataFrame()

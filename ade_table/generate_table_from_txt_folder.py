@@ -5,7 +5,6 @@ import torch
 from dnorm_j import DNorm
 
 from BERT.Model import NERModel
-from BERT.predict import *
 from util.ade_table_utils import *
 
 if __name__ == '__main__':
@@ -33,14 +32,10 @@ if __name__ == '__main__':
         # ['ID', 'Drug', 'Adverse Event', 'Place'])  # ID,  薬剤名, 有害事象, 想定した服薬指導実施場所
 
         # Apply the model to extract symptoms
-        tokenizer = model.tokenizer
-        vocabulary = model.vocabulary
+        sentences_embeddings = model.prepare_sentences(lines[1:])
+        labels = model.predict(sentences_embeddings)
+        sentences = model.convert_ids_to_tokens(sentences_embeddings)
 
-        sentences_embeddings = bert_utils.prepare_sentences(lines[1:], tokenizer)
-        tags = model.predict(sentences_embeddings)
-        labels = convert_prediction_to_labels(tags, vocabulary)
-        sentences = [tokenizer.convert_ids_to_tokens(t)[1:] for t in sentences_embeddings]
-        labels = remove_label_padding(sentences, labels)
         ne_dict = convert_labels_to_dict(sentences, labels)
         ne_dict = normalize_entities(ne_dict, DNorm.from_pretrained())
 

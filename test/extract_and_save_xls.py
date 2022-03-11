@@ -1,9 +1,11 @@
-import pandas as pd
-import os
 import glob
+import os
+
 import mojimoji
+import pandas as pd
 
 from BERT.Model import NERModel
+from BERT.predict import predict_from_sentences_list
 from util.iob_util import convert_iob_to_xml, convert_iob_to_dict
 
 if __name__ == '__main__':
@@ -15,12 +17,9 @@ if __name__ == '__main__':
     model_name = 'cl-tohoku/bert-base-japanese-char-v2'
     model = NERModel.load_transformers_model(model_name, '../../out')
 
-    tokenizer = model.tokenizer
-    vocabulary = model.vocabulary
-
     MAX_LENGTH = 512
 
-    #iterate through files
+    # iterate through files
     for file in file_list:
         filename = os.path.split(file)[1]
         path = directory + filename
@@ -44,18 +43,7 @@ if __name__ == '__main__':
         texts = [mojimoji.han_to_zen(t, kana=False) for t in texts]
 
         # Tokenize text for BERT
-        texts = [tokenizer.tokenize(t) for t in texts]
-        # Pad the sentences
-        # print(max([len(i) for i in texts]))
-        # print(MAX_LENGTH)
-        # texts = [t[:MAX_LENGTH] + ['[PAD]'] * (MAX_LENGTH - len(t)) for t in texts if len(t) < MAX_LENGTH]
-        # Convert to ids
-        data_x = [tokenizer.convert_tokens_to_ids(['[CLS]'] + t) for t in texts]
-
-        # Extract drug names
-        tags = model.predict(data_x)
-        labels = [[vocabulary[t] for t in tag] for tag in tags]
-        data_x = [tokenizer.convert_ids_to_tokens(t)[1:] for t in data_x]
+        data_x, labels = predict_from_sentences_list(model, texts)
 
         # for x, t in zip(data_x, labels):
         #     print('\n'.join([x1 + '\t' + str(x2) for x1, x2 in zip(x, t)]))
