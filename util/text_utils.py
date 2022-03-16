@@ -1,8 +1,6 @@
 import re
 from abc import abstractmethod, ABCMeta
 
-from thefuzz import fuzz
-
 
 def preprocessing(texts, remove_core_tag=True):
     """Preprocessing steps for strings.
@@ -51,9 +49,22 @@ def split_sentences(texts, return_flat_list=True):
 class EntityNormalizerInterface(metaclass=ABCMeta):
 
     @abstractmethod
-    def normalize(self, term, matching_method=fuzz.token_set_ratio):
+    def normalize(self, term, matching_method):
         pass
 
     @abstractmethod
-    def normalize_list(self, terms, matching_method=fuzz.token_set_ratio):
+    def normalize_list(self, terms, matching_method):
         pass
+
+
+class DrugNameMatcher(metaclass=ABCMeta):
+
+    @abstractmethod
+    def match(self, text, matching_method):
+        pass
+
+    @staticmethod
+    def exact_match(text1, text2):
+        if text1 == text2:
+            return 100
+        return 0
