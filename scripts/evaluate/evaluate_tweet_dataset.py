@@ -14,7 +14,7 @@ if __name__ == '__main__':
 
     # Get file list
     DIRECTORY = "../../data/2021-tweet副作用/"
-    output_dir = "../../data/2021-tweet副作用/tagged"
+    output_dir = "../../out/2021-tweet副作用/"
     os.makedirs(output_dir, exist_ok=True)
 
     file_list = glob.glob(DIRECTORY + '[!~]*.csv')

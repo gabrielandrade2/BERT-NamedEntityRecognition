@@ -2,14 +2,13 @@ import glob
 import json
 import os
 
-import torch
-
-from BERT.Model import NERModel
-from BERT.predict import predict_from_sentences_list
-from util import iob_util
+from knowledge_bases.hyakuyaku import *
+from util import text_utils
+from util.text_utils import tag_matches
 
 
-def predict_file(file, output_file, model):
+def predict_file(file, output_file):
+    matcher = HyakuyakuDrugMatcher(HyakuyakuList())
     output_file.write("<articles>\n")
     i = 0
     processed = 0
@@ -31,36 +30,30 @@ def predict_file(file, output_file, model):
 
         processed = processed + 1
         try:
-            sentences, labels = predict_from_sentences_list(model, [text], True)
+            sentences = text_utils.split_sentences([text], True)
             tagged_sentences = list()
-            for sent, label in zip(sentences, labels):
-                tagged_sentences.append(iob_util.convert_iob_to_xml(sent, label))
+            for sentence in sentences:
+                matches = matcher.match(sentence)
+                tagged_sentences.append(tag_matches(sentence, matches, 'M'))
             output_file.write("<article id=\"{}\">\n".format(i))
             output_file.write("\n".join(tagged_sentences))
             output_file.write("\n</article>\n")
         except Exception as e:
             print('failed')
             print(e)
-            print(len(sentences), len(labels))
     output_file.write("</articles>\n")
     output_file.flush()
     print("Processed", processed, "out of", i, "articles")
 
 
 if __name__ == '__main__':
-    # Load BERT model
-    model_name = 'cl-tohoku/bert-base-japanese-char-v2'
-    model = NERModel.load_transformers_model(model_name, '../../out/out_IM_v6')
-
     # Load files
     # Get file list
     DIRECTORY = "/Users/gabriel-he/PycharmProjects/NER/data/JST data"
-    output_dir = "../../out/JST data"
+    output_dir = "../out/JST data-drugname"
     os.makedirs(output_dir, exist_ok=True)
 
     file_list = sorted(glob.glob(DIRECTORY + '/[!~]*.json'))
-
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     for i in range(len(file_list)):
         file = file_list[i]
@@ -71,4 +64,4 @@ if __name__ == '__main__':
         output_file = open(output_filename, "w")
         print("Output file:", output_filename)
 
-        predict_file(open(file), output_file, model)
+        predict_file(open(file), output_file)

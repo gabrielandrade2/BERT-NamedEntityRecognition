@@ -81,13 +81,3 @@ class MedDRAPatientFriendlyPTEntityNormalizer(EntityNormalizerInterface):
             normalized_term = term
 
         return normalized_term, score
-
-    def normalize_list(self, terms, matching_method=fuzz.token_set_ratio, threshold=0):
-        normalized_list = list()
-        score_list = list()
-        for term in terms:
-            normalized_term, score = self.normalize(term, matching_method, threshold)
-            normalized_list.append(normalized_term)
-            score_list.append(score)
-
-        return normalized_list, score_list

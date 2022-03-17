@@ -1,5 +1,5 @@
 import re
-from abc import abstractmethod, ABCMeta
+from abc import abstractmethod, ABC
 
 
 def preprocessing(texts, remove_core_tag=True):
@@ -45,26 +45,78 @@ def split_sentences(texts, return_flat_list=True):
             processed_texts.append(processed_text)
     return processed_texts
 
+def tag_matches(text, tags, tag_type):
+    """ Add HTML tags to a text.
 
-class EntityNormalizerInterface(metaclass=ABCMeta):
+    :param text: The string that will have the tags added.
+    :param tags: The tuple containing start/end position of the tags in the referring string.
+    :param tag_type: The tag to be added (without <>).
+    :return:
+    """
+    tags = sorted(tags)
+    start_tag = "<" + tag_type + ">"
+    end_tag = "</" + tag_type + ">"
+    offset = len(start_tag) + len(end_tag)
+    total_offset = 0
+    for start, end, entry in tags:
+        start += total_offset
+        end += total_offset
+        tagged = start_tag + text[start:end] + end_tag
+        text = text[:start] + tagged + text[end:]
+        total_offset += offset
+    return text
+
+class EntityNormalizerInterface(ABC):
 
     @abstractmethod
-    def normalize(self, term, matching_method):
+    def normalize(self, term, matching_method, threshold):
         pass
 
-    @abstractmethod
-    def normalize_list(self, terms, matching_method):
-        pass
+    def normalize_list(self, terms, matching_method, threshold):
+        normalized_list = list()
+        score_list = list()
+        for term in terms:
+            normalized_term, score = self.normalize(term, matching_method, threshold)
+            normalized_list.append(normalized_term)
+            score_list.append(score)
+
+        return normalized_list, score_list
 
 
-class DrugNameMatcher(metaclass=ABCMeta):
+class DrugNameMatcher(ABC):
 
     @abstractmethod
     def match(self, text, matching_method):
         pass
 
     @staticmethod
-    def exact_match(text1, text2):
-        if text1 == text2:
-            return 100
-        return 0
+    def exact_match(text1, text2, ignore=list()):
+        ignore = iter(sorted(ignore))
+        start = 0
+        max = len(text1)
+        length = len(text2)
+        out = list()
+
+        while True:
+            item = next(ignore, None)
+            if item:
+                end = item[0]
+            else:
+                end = max
+
+            start = text1.find(text2, start, end)
+
+            # Found nothing
+            if start == -1:
+                # Reached the end
+                if end == max:
+                    return out
+                # Jump over next ignore item
+                else:
+                    start = item[1]
+                    continue
+
+            # Found something
+            else:
+                out.append((start, start + length, text2))
+                start += length
