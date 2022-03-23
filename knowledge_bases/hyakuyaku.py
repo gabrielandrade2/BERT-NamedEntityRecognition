@@ -1,7 +1,7 @@
 import pandas as pd
 from thefuzz import fuzz
 
-from util import iob_util
+from util import text_utils
 from util.text_utils import EntityNormalizer, DrugNameMatcher
 
 
@@ -66,5 +66,4 @@ class HyakuyakuDrugIOBMatcher(HyakuyakuDrugMatcher):
 
     def match(self, text):
         matches = super().match(text)
-        dict_matches = [{'span': (match[0], match[1]), 'type': self.iob_tag, 'word': match[2]} for match in matches]
-        return iob_util.convert_dict_to_xml(text, dict_matches)
+        return text_utils.tag_matches(text, matches, self.iob_tag)
