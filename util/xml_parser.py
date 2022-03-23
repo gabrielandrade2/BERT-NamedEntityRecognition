@@ -1,5 +1,4 @@
-from xml.dom import minidom
-
+import lxml.etree as etree
 import pandas as pd
 from lxml.etree import XMLSyntaxError, XMLParser
 
@@ -7,25 +6,31 @@ from util.iob_util import convert_xml_text_to_iob
 from util.text_utils import *
 
 
-def xml_to_articles(file):
+def xml_to_articles(file_path):
     """Extract all instances of <article> into a list, from a given xml file.
 
-    :param file: The corpus xml file.
+    :param file_path: The path to the xml file.
     :return: List of strings, containing all the articles as found in the file.
     """
 
-    xml_document = minidom.parse(file)
-    docs = xml_document.getElementsByTagName('article')
-    print('Converting ' + str(len(docs)) + ' articles')
-
     articles = list()
-    for doc in docs:
-        text = ''
-        for i in doc.childNodes:
-            text += i.toxml()
+    for _, elem in etree.iterparse(file_path, events=("start",), tag='article', recover=True):
+        text = __stringify_children__(elem)
+        text = text.rstrip()
         articles.append(text)
     return articles
 
+
+def __stringify_children__(node):
+    s = node.text
+    if s is None:
+        s = ''
+    for child in node:
+        temp = etree.tostring(child, encoding='unicode')
+        if '<article' in temp:
+            break;
+        s += temp
+    return s
 
 def convert_xml_to_dataframe(file, tag_list, print_info=True):
     """ Converts a corpus xml file to a dataframe.

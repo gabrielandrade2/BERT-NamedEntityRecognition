@@ -10,7 +10,7 @@ if __name__ == '__main__':
     parser.add_argument('--generate_heatmap', type=bool, help='Generate heatmap picture', default=False)
     args = parser.parse_args()
 
-    file = open(args.input_file)
+    file = args.input_file
     articles = xml_parser.xml_to_articles(file);
     symptoms = list()
     drugs = list()
