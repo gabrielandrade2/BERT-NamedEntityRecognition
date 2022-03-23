@@ -1,12 +1,13 @@
 import pandas as pd
 from thefuzz import fuzz
 
-from util.text_utils import EntityNormalizerInterface, DrugNameMatcher
+from util import iob_util
+from util.text_utils import EntityNormalizer, DrugNameMatcher
 
 
 class HyakuyakuList:
 
-    def __init__(self, path='../data/HYAKUYAKU_FULL_v20210706.xlsx'):
+    def __init__(self, path='/Users/gabriel-he/PycharmProjects/NER/data/HYAKUYAKU_FULL_v20210706.xlsx'):
         self.df = pd.read_excel(path)
 
     def get_surface_forms(self):
@@ -16,7 +17,7 @@ class HyakuyakuList:
         return self.df['一般名'].to_list()
 
 
-class HyakuyakuNormalizer(EntityNormalizerInterface):
+class HyakuyakuNormalizer(EntityNormalizer):
 
     def __init__(self, hyakuyaku_list):
         self.list = hyakuyaku_list
@@ -40,17 +41,30 @@ class HyakuyakuNormalizer(EntityNormalizerInterface):
 
 class HyakuyakuDrugMatcher(DrugNameMatcher):
 
-    def __init__(self, hyakuyaku_list):
+    def __init__(self, hyakuyaku_list, matching_method=DrugNameMatcher.exact_match):
         self.list = hyakuyaku_list
+        self.matching_method = matching_method
         candidate_list = self.list.get_surface_forms()
         # Order list by longer candidates first
         candidate_list = sorted(candidate_list, key=len, reverse=True)
         # Ignore terms with 2 characters or less
         self.candidate_list = list(filter(lambda x: len(x) > 2, candidate_list))
 
-    def match(self, text, matching_method=DrugNameMatcher.exact_match):
+    def match(self, text):
         matches = list()
         i = 0
         for entry in self.candidate_list:
-            matches.extend(matching_method(text, entry, ignore=matches))
+            matches.extend(self.matching_method(text, entry, ignore=matches))
         return matches
+
+
+class HyakuyakuDrugIOBMatcher(HyakuyakuDrugMatcher):
+
+    def __init__(self, hyakuyaku_list, iob_tag, matching_method=DrugNameMatcher.exact_match):
+        super().__init__(hyakuyaku_list, matching_method=matching_method)
+        self.iob_tag = iob_tag
+
+    def match(self, text):
+        matches = super().match(text)
+        dict_matches = [{'span': (match[0], match[1]), 'type': self.iob_tag, 'word': match[2]} for match in matches]
+        return iob_util.convert_dict_to_xml(text, dict_matches)

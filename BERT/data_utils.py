@@ -94,8 +94,8 @@ class Batch(object):
             x = [d[0] for d in data[s_pos:e_pos]]
             l = [d[1] for d in data[s_pos:e_pos]]
             length = [len(d[0]) for d in data[s_pos:e_pos]]
-            x = pad_sequence(x, self.max_size, pad_value=self.pad_value, issort=self.sort)
-            l = pad_sequence(l, self.max_size, pad_value=self.pad_value, issort=self.sort)
+            x = pad_sequence(x, max_length=self.max_size, pad_value=self.pad_value, issort=self.sort)
+            l = pad_sequence(l, max_length=self.max_size, pad_value=self.pad_value, issort=self.sort)
 
             yield x, l, length
 

@@ -4,7 +4,7 @@ from sqlite3 import Error
 import pandas as pd
 from thefuzz import fuzz
 
-from util.text_utils import EntityNormalizerInterface
+from util.text_utils import EntityNormalizer
 
 
 class MedDRADatabase:
@@ -60,19 +60,21 @@ class MedDRAPatientFriendlyList:
         return list(self.df[['LLT kanji', 'LLT code', 'Level']].itertuples(index=False, name=None))
 
 
-class MedDRAPatientFriendlyPTEntityNormalizer(EntityNormalizerInterface):
+class MedDRAPatientFriendlyPTEntityNormalizer(EntityNormalizer):
 
-    def __init__(self, database, patient_friendly_list):
+    def __init__(self, database, patient_friendly_list, matching_method=fuzz.token_set_ratio, threshold=0):
         self.database = database
         self.patient_friendly_list = patient_friendly_list
         self.pf_list = patient_friendly_list.get_patient_friendly_tuples()
+        self.matching_method = matching_method
+        self.threshold = threshold
 
-    def normalize(self, term, matching_method=fuzz.token_set_ratio, threshold=0):
-        preferred_candidate = max([(matching_method(term, pf[0]), pf) for pf in self.pf_list])
+    def normalize(self, term):
+        preferred_candidate = max([(self.matching_method(term, pf[0]), pf) for pf in self.pf_list])
         patient_friendly_term = preferred_candidate[1]
         score = preferred_candidate[0]
 
-        if score > threshold:
+        if score > self.threshold:
             if patient_friendly_term[2] == 'pt':
                 normalized_term = patient_friendly_term[0]
             else:

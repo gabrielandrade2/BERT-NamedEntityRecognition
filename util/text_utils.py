@@ -45,6 +45,7 @@ def split_sentences(texts, return_flat_list=True):
             processed_texts.append(processed_text)
     return processed_texts
 
+
 def tag_matches(text, tags, tag_type):
     """ Add HTML tags to a text.
 
@@ -66,17 +67,18 @@ def tag_matches(text, tags, tag_type):
         total_offset += offset
     return text
 
-class EntityNormalizerInterface(ABC):
+
+class EntityNormalizer(ABC):
 
     @abstractmethod
-    def normalize(self, term, matching_method, threshold):
+    def normalize(self, term):
         pass
 
-    def normalize_list(self, terms, matching_method, threshold):
+    def normalize_list(self, terms):
         normalized_list = list()
         score_list = list()
         for term in terms:
-            normalized_term, score = self.normalize(term, matching_method, threshold)
+            normalized_term, score = self.normalize(term)
             normalized_list.append(normalized_term)
             score_list.append(score)
 
@@ -86,7 +88,7 @@ class EntityNormalizerInterface(ABC):
 class DrugNameMatcher(ABC):
 
     @abstractmethod
-    def match(self, text, matching_method):
+    def match(self, text):
         pass
 
     @staticmethod

@@ -20,6 +20,7 @@ class NERModel:
         self.tokenizer = tokenizer
         self.vocabulary = vocabulary
         self.device = device
+        self.max_size = None
 
     @classmethod
     def load_transformers_model(cls, pre_trained_model_name, model_dir, device='cpu'):
@@ -34,13 +35,20 @@ class NERModel:
 
         return cls(model, tokenizer, label_vocab, device)
 
+    def set_max_size(self, max_size):
+        self.max_size = max_size
+
     def train(self, x, y, max_epoch=10, lr=3e-5, batch_size=8, val=None, outputdir=None):
         model = self.model
         device = self.device
+        max_size = self.max_size
+
+        if not max_size:
+            max_size = max([len(i) for i in x])
 
         os.makedirs(outputdir, exist_ok=True)
 
-        data = data_utils.Batch(x, y, batch_size=batch_size, max_size=1024)
+        data = data_utils.Batch(x, y, batch_size=batch_size, max_size=max_size)
         if val is not None:
             val_data = data_utils.Batch(val[0], val[1], batch_size=batch_size)
             val_loss = []
@@ -109,8 +117,10 @@ class NERModel:
     def predict(self, x, return_labels=True):
         model = self.model
         device = self.device
+        max_size = self.max_size
 
-        max_size = max([len(i) for i in x])
+        if not max_size:
+            max_size = max([len(i) for i in x])
 
         data = data_utils.Batch(x, x, batch_size=8, sort=False, max_size=max_size)
 
