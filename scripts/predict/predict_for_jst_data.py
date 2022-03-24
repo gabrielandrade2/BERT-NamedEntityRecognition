@@ -31,7 +31,7 @@ def predict_file(file, output_file, model):
         except KeyError:
             continue
 
-        processed = processed + 1
+
         try:
             sentences, labels = predict_from_sentences_list(model, [text], True)
             tagged_sentences = list()
@@ -42,6 +42,7 @@ def predict_file(file, output_file, model):
             output_file.write("<article id=\"{}\">\n".format(i))
             output_file.write("\n".join(tagged_sentences))
             output_file.write("\n</article>\n")
+            processed += 1
         except Exception as e:
             print('failed')
             print(e)

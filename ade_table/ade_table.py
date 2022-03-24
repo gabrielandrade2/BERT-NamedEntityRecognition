@@ -15,6 +15,10 @@ def from_lists(drugs: list, entities: list, normalization_model: EntityNormalize
 
     for drug_list, entity_list in zip(drugs, entities):
         for drug in drug_list:
+            # Ignore matches with a single character
+            if len(drug) < 2:
+                continue
+
             # Add new drug to table
             if drug in output_dict:
                 drug_dict = output_dict[drug]
@@ -23,6 +27,10 @@ def from_lists(drugs: list, entities: list, normalization_model: EntityNormalize
 
             # Check if this entity exists for the current drug row
             for named_entity in entity_list:
+                # Ignore matches with a single character
+                if len(named_entity) < 2:
+                    continue
+
                 if named_entity in drug_dict:
                     count = drug_dict[named_entity] + 1
                 else:
