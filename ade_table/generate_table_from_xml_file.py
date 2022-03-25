@@ -29,7 +29,7 @@ if __name__ == '__main__':
     table = ade_table.from_lists(drugs, symptoms, normalization_model)
 
     output_path = args.input_file.replace('.xml', '.xlsx')
-    table.to_dataframe().to_excel(output_path)
+    table.to_excel(output_path)
 
     if args.generate_heatmap:
         table.generate_heatmap(output_path=output_path.replace('.xlsx', '.png'))

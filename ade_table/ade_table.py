@@ -6,6 +6,10 @@ import seaborn as sns
 from util.text_utils import EntityNormalizer
 
 
+def from_excel_file(file_path):
+    return ADETable(pd.read_excel(file_path))
+
+
 def from_lists(drugs: list, entities: list, normalization_model: EntityNormalizer = None):
     assert len(drugs) == len(entities)
     output_dict = {}
@@ -38,12 +42,17 @@ def from_lists(drugs: list, entities: list, normalization_model: EntityNormalize
                 drug_dict[named_entity] = count
             output_dict[drug] = drug_dict
 
-    return ADETable(output_dict)
+    return from_dict(output_dict)
+
+
+def from_dict(data):
+    return ADETable(pd.DataFrame.from_dict(data, orient='index').fillna(0))
+
 
 class ADETable:
 
     def __init__(self, data):
-        self.table = pd.DataFrame.from_dict(data, orient='index').fillna(0)
+        self.table = data
         self.__post_process()
 
     def __post_process(self):
@@ -67,6 +76,12 @@ class ADETable:
 
     def to_dataframe(self):
         return self.table
+
+    def to_excel(self, output_path):
+        self.table.to_excel(output_path)
+
+    def dump_to_file(self, output_path):
+        pass
 
     def generate_heatmap(self, output_path):
         mpl.rc('font', family="Hiragino Sans")
