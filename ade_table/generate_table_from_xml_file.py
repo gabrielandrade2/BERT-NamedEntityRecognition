@@ -11,7 +11,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     file = args.input_file
-    articles = xml_parser.xml_to_articles(file);
+    articles = xml_parser.xml_to_articles(file, return_iterator=True)
     symptoms = list()
     drugs = list()
 

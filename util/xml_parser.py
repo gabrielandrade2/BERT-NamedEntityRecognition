@@ -6,31 +6,48 @@ from util.iob_util import convert_xml_text_to_iob
 from util.text_utils import *
 
 
-def xml_to_articles(file_path):
+def xml_to_articles(file_path, return_iterator=False):
     """Extract all instances of <article> into a list, from a given xml file.
 
     :param file_path: The path to the xml file.
+    :param return_iterator: For huge files, it returns an iterator that read the file entry by entry instead of loading
+    everything into memory.
     :return: List of strings, containing all the articles as found in the file.
     """
 
-    articles = list()
-    for _, elem in etree.iterparse(file_path, events=("start",), tag='article', recover=True):
-        text = __stringify_children__(elem)
-        text = text.rstrip()
-        articles.append(text)
-    return articles
+    reader = IncrementalXMLReader(file_path)
+    if return_iterator:
+        return reader
+    else:
+        return [text for text in reader]
 
 
-def __stringify_children__(node):
-    s = node.text
-    if s is None:
-        s = ''
-    for child in node:
-        temp = etree.tostring(child, encoding='unicode')
-        if '<article' in temp:
-            break;
-        s += temp
-    return s
+class IncrementalXMLReader:
+
+    def __init__(self, file_path):
+        self.parser = etree.iterparse(file_path, events=("start",), tag='article', recover=True)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        _, elem = next(self.parser)
+        text = self.__stringify_children(elem)
+        text = text.strip()
+        return text
+
+    @staticmethod
+    def __stringify_children(node):
+        s = node.text
+        if s is None:
+            s = ''
+        for child in node:
+            temp = etree.tostring(child, encoding='unicode')
+            if '<article' in temp:
+                break
+            s += temp
+        return s
+
 
 def convert_xml_to_dataframe(file, tag_list, print_info=True):
     """ Converts a corpus xml file to a dataframe.
