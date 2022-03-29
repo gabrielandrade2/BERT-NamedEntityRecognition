@@ -1,15 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="PublishConfigData" autoUpload="Always" createEmptyFolders="true" exclude=".svn;.cvs;.idea;.DS_Store;.git;.hg;*.hprof;*.pyc;venv*;out;.gitignore;models_backup;data" autoUploadExternalChanges="true">
-    <serverData>
-      <paths name="gabriel-he@kohaku.naist.jp:22 password">
-        <serverdata>
-          <mappings>
-            <mapping deploy="pycharm-upload/NER" local="$PROJECT_DIR$" />
-          </mappings>
-        </serverdata>
-      </paths>
-    </serverData>
     <option name="myAutoUpload" value="ALWAYS" />
   </component>
 </project>
