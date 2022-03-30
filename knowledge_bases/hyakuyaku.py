@@ -5,6 +5,10 @@ from util import text_utils
 from util.text_utils import EntityNormalizer, DrugNameMatcher
 
 
+class TranslationNotFound(BaseException):
+    pass
+
+
 class HyakuyakuList:
 
     def __init__(self, path='/Users/gabriel-he/PycharmProjects/NER/data/HYAKUYAKU_FULL_v20210706.xlsx'):
@@ -16,6 +20,27 @@ class HyakuyakuList:
     def get_general_names(self):
         return self.df['一般名'].to_list()
 
+    def get_english_translation(self, term):
+        for column_name in ['出現形', '一般名']:
+            column = self.df[column_name]
+            matches = column[column == term]
+            if not matches.empty:
+                idx = matches.index[0]
+                break
+
+        if not idx:
+            raise TranslationNotFound
+        english_names = self.df['出現形英語（DeepL翻訳）']
+        return english_names[idx]
+
+    def append_english_name(self, drug):
+        try:
+            translation = self.get_english_translation(drug)
+            if translation:
+                return '{} ({})'.format(drug, translation)
+        except TranslationNotFound:
+            pass
+        return drug
 
 class HyakuyakuNormalizer(EntityNormalizer):
 

@@ -1,6 +1,7 @@
 import argparse
 
 import ade_table
+from knowledge_bases.hyakuyaku import HyakuyakuList
 from knowledge_bases.meddra import MedDRADatabase, MedDRAPatientFriendlyPTEntityNormalizer, MedDRAPatientFriendlyList
 from util import xml_parser, iob_util
 
@@ -25,6 +26,10 @@ if __name__ == '__main__':
         database,
         MedDRAPatientFriendlyList('/Users/gabriel-he/Documents/MedDRA/patient-friendly_term_list_v24.1_J.xlsx')
     )
+
+    # Add drug english names
+    hyakuyaku = HyakuyakuList()
+    drugs = [[hyakuyaku.append_english_name(drug) for drug in drug_list] for drug_list in drugs]
 
     table = ade_table.from_lists(drugs, symptoms, normalization_model)
 
