@@ -27,13 +27,18 @@ from lxml.etree import XMLSyntaxError
 from seqeval.metrics import accuracy_score, f1_score, precision_score, classification_report
 from seqeval.scheme import IOB2
 
+from util.list_utils import list_size
+
 
 def split_tag(tag):
     if tag == "O":
         return tag, None
     else:
-        t, l = tag.split('-', 1)
-        return t, l
+        try:
+            t, l = tag.split('-', 1)
+            return t, l
+        except ValueError:
+            return tag, ''
 
 
 def unzip_iob(iobs):
@@ -84,6 +89,33 @@ def convert_iob_to_dict(tt, ii):
             result.append({'span': (s_pos, idx), 'type': tag, 'word': word})
             s_pos = -1
             word = ''
+
+    return result
+
+
+def convert_iob_taglist_to_dict(ii):
+    """Convert iob tagslist to dict
+
+    Convert tokens and IOB2 labels to dict format
+
+    Args:
+        ii (List): IOB2 label list
+
+    Returns:
+        List: List of dict. Format = [{'span':(start_idx, end_idx), 'type': tag}]
+
+    """
+    ii = ['O'] + ii + ['O']
+    s_pos = -1
+    result = []
+    for idx in range(1, len(ii) - 1):
+        prefix, tag = split_tag(ii[idx])
+        if is_chunk_start(ii[idx - 1], ii[idx]):
+            s_pos = idx - 1
+
+        if is_chunk_end(ii[idx], ii[idx + 1]):
+            result.append({'span': (s_pos, idx), 'type': tag})
+            s_pos = -1
 
     return result
 
@@ -259,17 +291,19 @@ def convert_xml_text_list_to_iob_list(texts, tag_list, ignore_mismatch_tags=True
                 tag.append(item[1])
             items.append(sent)
             tags.append(tag)
-        except XMLSyntaxError:
+        except XMLSyntaxError as e:
             if print_failed_sentences:
                 print("Skipping text with xml syntax error, id: " + str(i))
                 print(t)
+            elif not ignore_mismatch_tags:
+                raise e
         i = i + 1
     return items, tags
 
 
 def evaluate_performance(original_labels, predict_labels):
     ##### Insanity check #####
-    assert __list_size(original_labels) == __list_size(predict_labels)
+    assert list_size(original_labels) == list_size(predict_labels)
 
     ###### Calculate perfromance metrics #####
 
@@ -278,10 +312,6 @@ def evaluate_performance(original_labels, predict_labels):
     print('F1 score: ' + str(f1_score(original_labels, predict_labels)))
     # print(classification_report(original_labels, labels))
     print(classification_report(original_labels, predict_labels, mode='strict', scheme=IOB2))
-
-
-def __list_size(list):
-    return sum([len(t) for t in list])
 
 
 def print_iob(iob):
@@ -332,47 +362,3 @@ def load_iob(fn, z=True):
         return [list(iob[0]) for iob in iobs], [list(iob[1]) for iob in iobs]
 
     return iobs
-
-
-"""
-if __name__ == "__main__":
-    # data path
-    data = sys.argv[1]
-
-    # 属性リスト
-    attr_list = ['MOD']
-
-    # 有効なタグリスト
-    valid_tag = ['C']
-    #valid_tag = None
-
-    # tokenizer
-    # 文字単位だと
-    tokenizer = list
-    mecab = MeCab.Tagger('-Owakati')
-    tokenizer = Tokenizer(mecab).tokenize
-
-    # 東大BERT
-    mecab = MeCab.Tagger('-Owakati -d /opt/mecab/lib/mecab/dic/mecab-ipadic-neologd -u /opt/mecab/lib/mecab/dic/MANBYO_201907_Dic-utf8.dic')
-    tokenizer = Tokenizer(mecab).tokenize
-
-
-    with open(data, 'r') as f:
-        for i, line in enumerate(f):
-            line = line.rstrip()
-
-            if not line:
-                continue
-
-            #res, tags = convert_xml_to_taglist(line, valid_tag, attr=attr_list)
-            #tag_list = convert_taglist_to_iob(res, tags)
-            tag_list = convert_xml_to_iob(line, valid_tag, attr_list)
-
-            #print_iob(tag_list)
-            #print("")
-
-            tokens, iobs = zip(*tag_list)
-
-            res = convert_iob_to_xml(list(tokens), list(iobs))
-            print(load_iob('sample.txt', z=False))
-"""

@@ -68,6 +68,21 @@ def tag_matches(text, tags, tag_type):
     return text
 
 
+def remove_tags(text, tag_list=None):
+    """ Removes HTML tags from a text.
+
+    :param text: The string that will have the tags removed.
+    :param tag_list: The list of tags that should be removed. If None, all tags will be removed.
+    """
+    if tag_list:
+        for tag in tag_list:
+            regex = '<\/?{}>'.format(tag)
+            text = re.sub(re.sub(regex, text))
+    else:
+        text = re.sub('<[^<>]*>', '', text)
+    return text
+
+
 class EntityNormalizer(ABC):
 
     @abstractmethod
