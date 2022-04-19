@@ -30,6 +30,60 @@ class MedDRADatabase:
             self.conn.close()
         self.conn = None
 
+    def get_llt(self, llt_code):
+        """ Get the Low-level term (LLT) name from its code.
+
+        :param llt_code: The code of the term.
+        :return: The name of term or None, if a match is not found.
+        """
+        cursor = self.conn.cursor()
+        cursor.execute(
+            'SELECT llt_name FROM llt WHERE llt_code =  {}'.format(llt_code)
+        )
+        return cursor.fetchone()[0]
+
+    def get_all_llt(self):
+        """ Get a Dataframe representing the table containing all English LLTs.
+
+        :return: A Dataframe containing all terms' llt_code, llt_name and referring pt_code.
+        """
+        cursor = self.conn.cursor()
+        cursor.execute(
+            'SELECT llt_code, llt_name, pt_code FROM llt'
+        )
+        return pd.DataFrame(cursor.fetchall(), columns=['llt_code', 'llt_name', 'pt_code'])
+
+    def get_llt_j(self, llt_code):
+        """ Get the Japanese Low-level term (LLT) name from its code.
+
+        :param llt_code: The code of the term.
+        :return: The Japanese term term or None, if a match is not found.
+        """
+        cursor = self.conn.cursor()
+        cursor.execute(
+            'SELECT llt_name FROM llt_j WHERE llt_code =  {}'.format(llt_code)
+        )
+        return cursor.fetchone()[0]
+
+    def get_all_llt_j(self):
+        """ Get a Dataframe representing the table containing all Japanese LLTs.
+
+        :return: A Dataframe containing all Japanese terms' llt_code, llt_kanji, referring pt_code and llt_kana.
+        """
+        cursor = self.conn.cursor()
+        cursor.execute(
+            'SELECT llt_code, llt_name, pt_code, llt_kana FROM llt_j'
+        )
+        return pd.DataFrame(cursor.fetchall(), columns=['llt_code', 'llt_kanji', 'pt_code', 'llt_kana'])
+
+    def get_all_en_jp_llt(self):
+        cursor = self.conn.cursor()
+        cursor.execute(
+            'SELECT llt.llt_code, llt_name, llt_kanji, pt_code FROM llt '
+            'INNER JOIN llt_j ON llt.llt_code = llt_j.llt_code WHERE llt_kanji != ""'
+        )
+        return pd.DataFrame(cursor.fetchall(), columns=['llt_code', 'llt_name', 'llt_kanji', 'pt_code'])
+
     def get_pt_j_from_llt_code(self, llt_code):
         """ Get the Japanese preferred term (PT) for a given Low-level term (LLT) code.
 
