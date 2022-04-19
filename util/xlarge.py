@@ -3,7 +3,7 @@ from pprint import pprint
 from util import iob_util
 
 
-def score(gold, predicted):
+def score(gold, predicted, output_dict=None, print_results=False):
     # gold = list_utils.flatten_list(gold)
     # predicted = list_utils.flatten_list(predicted)
     gold = iob_util.convert_iob_taglist_to_dict(gold)
@@ -104,7 +104,11 @@ def score(gold, predicted):
     incorrect_match = len(predicted) - len(matched)
     score += 0
     results["incorrect_match"] = incorrect_match
-    pprint(results)
+    if print_results:
+        pprint(results)
+    if isinstance(output_dict, dict):
+        for key in results:
+            output_dict[key] = results[key]
     if len(gold):
         return score / (len(gold))
     return float(score)

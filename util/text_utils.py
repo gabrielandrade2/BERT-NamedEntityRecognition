@@ -76,8 +76,8 @@ def remove_tags(text, tag_list=None):
     """
     if tag_list:
         for tag in tag_list:
-            regex = '<\/?{}>'.format(tag)
-            text = re.sub(re.sub(regex, text))
+            regex = re.compile(r'<\/?{}>'.format(tag))
+            text = re.sub(regex, '', text)
     else:
         text = re.sub('<[^<>]*>', '', text)
     return text

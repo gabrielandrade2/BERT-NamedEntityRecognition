@@ -7,12 +7,21 @@ from transformers import BertForTokenClassification, BertJapaneseTokenizer
 
 from BERT import bert_utils
 from BERT.Model import NERModel
+from util.iob_util import convert_xml_text_list_to_iob_list
+from util.text_utils import split_sentences
 from util.xml_parser import convert_xml_file_to_iob_list
 
 
-def train_from_xml_file(xmlFile, model_name, tag_list, output_dir):
+def train_from_xml_file(xmlFile, model_name, tag_list, output_dir, should_split_sentences=True):
     ##### Load the data #####
-    sentences, tags = convert_xml_file_to_iob_list(xmlFile, tag_list, should_split_sentences=True)
+    sentences, tags = convert_xml_file_to_iob_list(xmlFile, tag_list, should_split_sentences=should_split_sentences)
+    return train_from_sentences_tags_list(sentences, tags, model_name, output_dir)
+
+
+def train_from_xml_texts(texts, model_name, tag_list, output_dir, should_split_sentences=True):
+    if should_split_sentences:
+        texts = split_sentences(texts)
+    sentences, tags = convert_xml_text_list_to_iob_list(texts, tag_list)
     return train_from_sentences_tags_list(sentences, tags, model_name, output_dir)
 
 
@@ -27,6 +36,7 @@ def train_from_sentences_tags_list(sentences, tags, model_name, output_dir):
 
     # Create vocabulary
     label_vocab = bert_utils.create_label_vocab(tags)
+    os.makedirs(output_dir, exist_ok=True)
     with open(output_dir + '/label_vocab.json', 'w') as f:
         json.dump(label_vocab, f, ensure_ascii=False)
 

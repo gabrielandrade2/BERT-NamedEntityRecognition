@@ -60,6 +60,15 @@ class Dataset(ABC):
         '''
         raise NotImplemented
 
+    def as_list(self):
+        '''
+        Returns a list containing all the elements of the current dataset.
+
+        :return: A list containing all the elements of the current dataset.
+        '''
+        return [text for text in self]
+
+
 class TwitterDataset(Dataset):
 
     def __init__(self, directory):

@@ -163,6 +163,13 @@ def convert_iob_to_xml(tokens, iobs):
     return convert_dict_to_xml(''.join(tokens), dic)
 
 
+def convert_list_iob_to_xml(list_tokens, list_iobs):
+    texts = list()
+    for tokens, iobs in zip(list_tokens, list_iobs):
+        texts.append(convert_iob_to_xml(tokens, iobs))
+    return '\n'.join(texts)
+
+
 def convert_xml_to_taglist(sent, tag_list=None, attr=[], ignore_mismatch_tags=True):
     text = '<sent>' + sent + '</sent>'
 
