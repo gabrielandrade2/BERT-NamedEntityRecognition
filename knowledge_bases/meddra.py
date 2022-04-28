@@ -38,9 +38,13 @@ class MedDRADatabase:
         """
         cursor = self.conn.cursor()
         cursor.execute(
-            'SELECT llt_name FROM llt WHERE llt_code =  {}'.format(llt_code)
+            'SELECT llt_name FROM llt WHERE llt_code = "{}"'.format(llt_code)
         )
-        return cursor.fetchone()[0]
+        ret = cursor.fetchone()
+        if ret:
+            return ret[0]
+        else:
+            return None
 
     def get_all_llt(self):
         """ Get a Dataframe representing the table containing all English LLTs.
@@ -72,9 +76,13 @@ class MedDRADatabase:
         """
         cursor = self.conn.cursor()
         cursor.execute(
-            'SELECT llt_name FROM llt_j WHERE llt_code =  {}'.format(llt_code)
+            'SELECT llt_name FROM llt_j WHERE llt_code = "{}"'.format(llt_code)
         )
-        return cursor.fetchone()[0]
+        ret = cursor.fetchone()
+        if ret:
+            return ret[0]
+        else:
+            return None
 
     def get_llt_j_code(self, llt_kanji):
         """ Get the Japanese Low-level term (LLT) code from its kanji.
@@ -84,9 +92,13 @@ class MedDRADatabase:
         """
         cursor = self.conn.cursor()
         cursor.execute(
-            'SELECT llt_code FROM llt_j WHERE llt_kanji =  {}'.format(llt_kanji)
+            'SELECT llt_code FROM llt_j WHERE llt_kanji = "{}"'.format(llt_kanji)
         )
-        return cursor.fetchone()[0]
+        ret = cursor.fetchone()
+        if ret:
+            return ret[0]
+        else:
+            return None
 
     def get_all_llt_j(self):
         """ Get a Dataframe representing the table containing all Japanese LLTs.
@@ -107,9 +119,13 @@ class MedDRADatabase:
         """
         cursor = self.conn.cursor()
         cursor.execute(
-            'SELECT pt_code FROM pt_j WHERE pt_kanji =  {}'.format(pt_kanji)
+            'SELECT pt_code FROM pt_j WHERE pt_kanji = "{}"'.format(pt_kanji)
         )
-        return cursor.fetchone()[0]
+        ret = cursor.fetchone()
+        if ret:
+            return ret[0]
+        else:
+            return None
 
     def get_all_pt_j(self):
         """ Get a Dataframe representing the table containing all Japanese PTs.
@@ -138,8 +154,8 @@ class MedDRADatabase:
         """
         cursor = self.conn.cursor()
         cursor.execute(
-            'SELECT pt_kanji, pt_j.pt_code FROM llt INNER JOIN pt_j ON llt.pt_code = pt_j.pt_code WHERE llt_code = {}'.format(
-                llt_code))
+            'SELECT pt_kanji, pt_j.pt_code FROM llt INNER JOIN pt_j ON llt.pt_code = pt_j.pt_code WHERE llt_code = "{}"'
+                .format(llt_code))
         res = cursor.fetchall()
 
         if not res:
