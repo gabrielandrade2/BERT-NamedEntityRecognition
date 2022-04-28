@@ -217,6 +217,17 @@ def convert_xml_to_taglist(sent, tag_list=None, attr=[], ignore_mismatch_tags=Tr
 
     return res, label
 
+def convert_xml_to_dict(sent, tag_list=None, attr=[], ignore_mismatch_tags=True):
+    res, label = convert_xml_to_taglist(sent, tag_list=tag_list, attr=attr, ignore_mismatch_tags=ignore_mismatch_tags)
+    label_dict = []
+    for tag in label:
+        label_dict.append({
+            "span": (int(tag[0]), int(tag[1])),
+            "word": tag[3],
+            "type": tag[2]
+        })
+
+    return res, label_dict
 
 def convert_taglist_to_iob(sent, label, tokenizer=list):
     tokens = tokenizer(sent)
