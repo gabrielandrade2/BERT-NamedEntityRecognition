@@ -21,6 +21,7 @@ Gabriel Andrade modifications:
     - Better support to handle mismatching tags (eg. missing leading or trailing tag).
     - Allow support for tags using 'i' (e.g. 'm-key')
 """
+from collections import deque
 
 import lxml.etree as etree
 from lxml.etree import XMLSyntaxError
@@ -121,30 +122,48 @@ def convert_iob_taglist_to_dict(ii):
 
 
 def convert_dict_to_xml(sent, dd):
-    result = ''
-    idx = 0
+    # Generate all text tags
+    dd = sorted(dd, key=lambda x: x['span'][0])
+    tags = []
     for d in dd:
-        s_pos, e_pos = d['span']
-        while idx < s_pos:
-            result += sent[idx]
-            idx += 1
+        tags.append((d['span'][0], "<" + d['type'] + ">"))  # Start tag
+        tags.append((d['span'][1], "</" + d['type'] + ">"))  # End tag
+    tags = sorted(tags, key=lambda x: x[0])
 
-        if 'norm' in d:
-            result += '<' + d['type'] + '>'
-        else:
-            result += '<' + d['type'] + '>'
+    # Tag texts
+    offset = 0
+    for tag in tags:
+        sent = sent[:tag[0] + offset] + tag[1] + sent[tag[0] + offset:]
+        offset += len(tag[1])
+    return sent
 
-        result += d['word']
-        result += '</' + d['type'] + '>'
 
-        idx = e_pos
+def convert_taglist_to_xml(sent, dd):
+    # Generate all text tags
+    dd = sorted(dd, key=lambda x: x[0])
+    tags = []
+    for d in dd:
+        tags.append((d[0], "<" + d[2] + ">"))  # Start tag
+        tags.append((d[1], "</" + d[2] + ">"))  # End tag
+    tags = sorted(tags, key=lambda x: x[0])
 
-    while idx < len(sent):
-        result += sent[idx]
-        idx += 1
+    # Tag texts
+    offset = 0
+    for tag in tags:
+        sent = sent[:tag[0] + offset] + tag[1] + sent[tag[0] + offset:]
+        offset += len(tag[1])
+    return sent
 
-    return result
 
+def convert_taglist_to_dict(taglist):
+    dict_tags = []
+    for tag in taglist:
+        dict_tags.append({
+            'span': [tag[0], tag[1]],
+            'type': tag[2],
+            'word': tag[3]
+        })
+    return dict_tags
 
 def convert_iob_to_xml(tokens, iobs):
     """Convert iob to xml
@@ -183,16 +202,16 @@ def convert_xml_to_taglist(sent, tag_list=None, attr=[], ignore_mismatch_tags=Tr
     ne_prefix = ""
     res = ""
     label = []
-    tag_set = set()
+    tag_set = deque()
     s_pos = -1
     idx = 0
+    word = ''
 
     for event, elem in parser.read_events():
-        isuse = (tag_list is None
-                 or (tag_list is not None and elem.tag in tag_list))
+        isuse = (tag_list is None or (tag_list is not None and elem.tag in tag_list))
 
         if event == 'start':
-            assert len(tag_set) < 2, "タグが入れ子になっています\n{}".format(sent)
+            # assert len(tag_set) < 2, "タグが入れ子になっています\n{}".format(sent)
             s_pos = idx
 
             if attr is not None and elem.attrib:
@@ -205,12 +224,18 @@ def convert_xml_to_taglist(sent, tag_list=None, attr=[], ignore_mismatch_tags=Tr
             idx += len(word)
 
             if elem.tag != 'sent' and isuse:
-                tag_set.add(elem.tag)
-                label.append((s_pos, idx, elem.tag + attr_list, word))
+                label_list = [s_pos, idx, elem.tag + attr_list, word, elem.tag]
+                tag_set.append(label_list)
+                # label.append((s_pos, idx, elem.tag + attr_list, word))
 
         if event == 'end':
-            if elem.tag != 'sent' and isuse:
-                tag_set.remove(elem.tag)
+            if elem.tag != 'sent' and isuse and tag_set[-1][-1] == elem.tag:
+                # and tag_set[-1] == elem.tag:
+                label_list = tag_set.pop()
+                label.append(tuple(label_list[:-1]))
+                for tag in tag_set:
+                    tag[1] = idx
+                    tag[3] += word
             word = elem.tail if elem.tail is not None else ""
             res += word
             idx += len(word)
@@ -380,3 +405,13 @@ def load_iob(fn, z=True):
         return [list(iob[0]) for iob in iobs], [list(iob[1]) for iob in iobs]
 
     return iobs
+
+
+# Test code
+if __name__ == '__main__':
+    text = 'This is a <c><core>test</core></c> <a>string <core>containing</core> multiple</a> tags <d>stacked</d>.'
+    untagged_text, tags = convert_xml_to_taglist(text)
+    print(tags)
+    convert_taglist_to_xml(untagged_text, tags)
+    untagged_text, tags = convert_xml_to_taglist(text)
+    print(tags)
