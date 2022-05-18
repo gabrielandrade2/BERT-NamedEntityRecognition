@@ -7,11 +7,12 @@ def progress_print(i, max, append_string, end):
     print(append_string, i, "of", max, percent, end=end)
 
 
-file_list = glob.glob('/Users/gabriel-he/Documents/JST data/' + '[!~]*.json')
+# match_keyword = ['症例']
+match_keyword = ['症例', '患者', '治療', '診断']
 
-output_file = open('../data/JST data/症例_filtered2.json', 'w')
-
-match_keyword = '症例'
+file_list = glob.glob('/Users/gabriel-he/Documents/JST data/2022-05/' + '[!~]*.json')
+output_file = open(
+    '/Users/gabriel-he/Documents/JST data/2022-05/filtered/' + '_'.join(match_keyword) + '_filtered.json', 'w')
 
 file_count = 0
 found = 0
@@ -29,7 +30,7 @@ for file in file_list:
             doc = json.loads(line)
             try:
                 keywords = doc['タイトル切り出し語(絞り込み用)']
-                if not keywords or match_keyword not in keywords:
+                if not keywords or not any(x in keywords for x in match_keyword):
                     continue
 
                 text = doc['文献抄録(和文)']
