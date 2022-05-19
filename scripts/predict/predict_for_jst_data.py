@@ -1,4 +1,4 @@
-import glob
+import argparse
 import json
 import os
 
@@ -21,9 +21,9 @@ def predict_file(file, output_file, model):
         i += 1
 
         try:
-            keywords = doc['タイトル切り出し語(絞り込み用)']
-            if not keywords or '症例' not in keywords:
-                continue
+            # keywords = doc['タイトル切り出し語(絞り込み用)']
+            # if not keywords or '症例' not in keywords:
+            #     continue
 
             text = doc['文献抄録(和文)']
             if not text:
@@ -52,22 +52,28 @@ def predict_file(file, output_file, model):
 
 
 if __name__ == '__main__':
-
-    os.chdir('/Users/gabriel-he/PycharmProjects/NER/')
+    parser = argparse.ArgumentParser(description='Predict jst data')
+    parser.add_argument('--model', type=str, help='Model')
+    parser.add_argument('--input', type=str, nargs="+", help='Input files')
+    parser.add_argument('--output', type=str, help='Output folder')
+    args = parser.parse_args()
 
     # Load BERT model
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    print(device)
     model_name = 'cl-tohoku/bert-base-japanese-char-v2'
-    model = NERModel.load_transformers_model(model_name, 'out/out_IM_v6')
+    model = NERModel.load_transformers_model(model_name, args.model, device)
 
     # Load files
     # Get file list
-    DIRECTORY = "/Users/gabriel-he/PycharmProjects/NER/data/JST data"
-    output_dir = "out/JST data"
+    # DIRECTORY = "/Users/gabriel-he/Documents/JST data/2022-05/filtered"
+    # output_dir = "/Users/gabriel-he/Documents/JST data/2022-05/out"
+    output_dir = args.output
     os.makedirs(output_dir, exist_ok=True)
 
-    file_list = sorted(glob.glob(DIRECTORY + '/[!~]*.json'))
-
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    # file_list = sorted(glob.glob(DIRECTORY + '/[!~]*.json'))
+    # file_list = ['/Users/gabriel-he/Documents/JST data/2022-05/filtered/症例_患者_治療_診断_filtered.json']
+    file_list = sorted(args.input)
 
     for i in range(len(file_list)):
         file = file_list[i]
