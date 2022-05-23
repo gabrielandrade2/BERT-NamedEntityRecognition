@@ -11,7 +11,7 @@ class TranslationNotFound(BaseException):
 
 class HyakuyakuList:
 
-    def __init__(self, path='/Users/gabriel-he/PycharmProjects/NER/data/HYAKUYAKU_FULL_v20210706.xlsx'):
+    def __init__(self, path='data/HYAKUYAKU_FULL_v20210706.xlsx'):
         self.df = pd.read_excel(path)
 
     def get_surface_forms(self):
