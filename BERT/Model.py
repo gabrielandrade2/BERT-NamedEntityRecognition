@@ -1,6 +1,7 @@
 import json
 import os
 
+import mojimoji
 import numpy as np
 import torch
 from torch import optim
@@ -162,6 +163,7 @@ class NERModel:
             single_item = len(sentences) == 1
             sentences = text_utils.split_sentences(sentences, single_item)
 
+        sentences = [mojimoji.han_to_zen(sentence) for sentence in sentences]
         tokenized_sentences = [self.tokenizer.tokenize(t) for t in sentences]
         return [self.tokenizer.convert_tokens_to_ids([CLS_TAG] + t) for t in tokenized_sentences]
 
@@ -210,4 +212,5 @@ class NERModel:
         return new_labels
 
     def convert_ids_to_tokens(self, embeddings):
-        return [self.tokenizer.convert_ids_to_tokens(t)[1:] for t in embeddings]
+        temp = [self.tokenizer.convert_ids_to_tokens(t)[1:] for t in embeddings]
+        return [[mojimoji.han_to_zen(t) for t in sent] for sent in temp]

@@ -15,17 +15,42 @@ def xml_to_articles(file_path, return_iterator=False):
     :return: List of strings, containing all the articles as found in the file.
     """
 
-    reader = IncrementalXMLReader(file_path)
+    try:
+        reader = ArticleReader(file_path)
+    except:
+        reader = IncrementalXMLReader(file_path)
     if return_iterator:
         return reader
     else:
         return [text for text in reader]
 
 
+class ArticleReader:
+
+    def __init__(self, file_path):
+        self.file = open(file_path, 'r')
+        if next(self.file).strip() != '<articles>':
+            raise Exception("Unsupported file: {}", file_path)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        # Get next <article> entry
+        while ('<article' not in next(self.file)):
+            continue
+        lines = []
+        while (True):
+            line = next(self.file)
+            if line == '</article>\n':
+                return ''.join(lines)
+            lines.append(line)
+
+
 class IncrementalXMLReader:
 
     def __init__(self, file_path):
-        self.parser = etree.iterparse(file_path, events=("start",), tag='article', recover=True)
+        self.parser = etree.iterparse(file_path, events=("start",), tag='article', recover=False)
 
     def __iter__(self):
         return self

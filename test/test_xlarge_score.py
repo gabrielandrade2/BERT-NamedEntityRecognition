@@ -11,7 +11,7 @@ from BERT.train import train_from_xml_texts
 from util import iob_util, text_utils, list_utils
 from util.Dataset import YakurekiTxtDataset
 from util.list_utils import flatten_list
-from util.xlarge import score
+from util.xlarge import score_from_iob
 
 if __name__ == '__main__':
     dataset = YakurekiTxtDataset("/Users/gabriel-he/Documents/datasets/薬歴/薬歴_タグ付け済_中江")
@@ -53,7 +53,7 @@ if __name__ == '__main__':
             xlarge_results = dict()
             row = (text_utils.remove_tags(tagged_text, tag_list=['m-key']),
                    iob_util.convert_list_iob_to_xml(predicted[0], predicted[1]),
-                   score(flatten_list(gold_temp), flatten_list(predicted_temp), output_dict=xlarge_results),
+                   score_from_iob(flatten_list(gold_temp), flatten_list(predicted_temp), output_dict=xlarge_results),
                    accuracy_score(gold_temp, predicted_temp),
                    precision_score(gold_temp, predicted_temp, zero_division=0),
                    f1_score(gold_temp, predicted_temp, zero_division=0),

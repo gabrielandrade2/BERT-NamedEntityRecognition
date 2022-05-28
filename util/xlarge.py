@@ -4,13 +4,6 @@ from util import iob_util
 
 
 def score(gold, predicted, output_dict=None, print_results=False):
-    # gold = list_utils.flatten_list(gold)
-    # predicted = list_utils.flatten_list(predicted)
-    gold = iob_util.convert_iob_taglist_to_dict(gold)
-    gold = sorted(gold, key=lambda x: x['span'][0])
-    predicted = iob_util.convert_iob_taglist_to_dict(predicted)
-    predicted = sorted(predicted, key=lambda x: x['span'][0])
-
     score = 0
     matched = set()
     results = dict.fromkeys(
@@ -114,6 +107,21 @@ def score(gold, predicted, output_dict=None, print_results=False):
     return float(score)
 
 
+def score_from_iob(gold, predicted, output_dict=None, print_results=False):
+    # gold = list_utils.flatten_list(gold)
+    # predicted = list_utils.flatten_list(predicted)
+    gold = iob_util.convert_iob_taglist_to_dict(gold)
+    gold = sorted(gold, key=lambda x: x['span'][0])
+    predicted = iob_util.convert_iob_taglist_to_dict(predicted)
+    predicted = sorted(predicted, key=lambda x: x['span'][0])
+
+    return score(gold, predicted, output_dict, print_results)
+
+
+def score_from_span(gold, predicted, output_dict=None, print_results=False):
+    pass
+
+
 if __name__ == '__main__':
     O = 'O'
     B = 'B'
@@ -126,89 +134,89 @@ if __name__ == '__main__':
     test = [O, O, B, I, I, I, O, O, O, O, B, I, I, I, I, O, O]
     print(gold)
     print(test)
-    print(score(gold, test))
+    print(score_from_iob(gold, test))
     print('\n')
 
     #      [O, O, B, I, I, I, O, O, O, O, B, I, I, I, I, O, O]
     test = [O, B, I, I, I, I, O, O, O, B, I, I, I, I, I, O, O]
     print(gold)
     print(test)
-    print(score(gold, test))
+    print(score_from_iob(gold, test))
     print('\n')
 
     #      [O, O, B, I, I, I, O, O, O, O, B, I, I, I, I, O, O]
     test = [O, B, I, O, B, I, O, O, O, O, B, I, I, I, I, O, O]
     print(gold)
     print(test)
-    print(score(gold, test))
+    print(score_from_iob(gold, test))
     print('\n')
 
     #      [O, O, B, I, I, I, O, O, O, O, B, I, I, I, I, O, O]
     test = [O, B, I, O, O, O, O, O, B, I, O, O, O, O, O, O, O]
     print(gold)
     print(test)
-    print(score(gold, test))
+    print(score_from_iob(gold, test))
     print('\n')
 
     #      [O, O, B, I, I, I, O, O, O, O, B, I, I, I, I, O, O]
     test = [O, B, I, O, B, I, O, B, I, O, B, I, O, B, I, O, O]
     print(gold)
     print(test)
-    print(score(gold, test))
+    print(score_from_iob(gold, test))
     print('\n')
 
     #      [O, O, B, I, I, I, O, O, O, O, B, I, I, I, I, O, O]
     test = [O, B, I, I, I, I, I, I, I, I, I, I, I, I, I, O, O]
     print(gold)
     print(test)
-    print(score(gold, test))
+    print(score_from_iob(gold, test))
     print('\n')
 
     #      [O, O, B, I, I, I, O, O, O, O, B, I, I, I, I, O, O]
     test = [O, B, I, I, I, I, I, I, O, O, B, I, I, I, I, I, I]
     print(gold)
     print(test)
-    print(score(gold, test))
+    print(score_from_iob(gold, test))
     print('\n')
 
     #      [O, O, B, I, I, I, O, O, O, O, B, I, I, I, I, O, O]
     test = [O, O, O, B, I, I, O, O, O, O, O, B, I, I, O, O, O]
     print(gold)
     print(test)
-    print(score(gold, test))
+    print(score_from_iob(gold, test))
     print('\n')
 
     #      [O, O, B, I, I, I, O, O, O, O, B, I, I, I, I, O, O]
     test = [O, B, I, I, I, I, I, I, I, I, I, I, O, B, I, I, I]
     print(gold)
     print(test)
-    print(score(gold, test))
+    print(score_from_iob(gold, test))
     print('\n')
 
     #      [O, O, B, I, I, I, O, O, O, O, B, I, I, I, I, O, O]
     test = [O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O]
     print(gold)
     print(test)
-    print(score(gold, test))
+    print(score_from_iob(gold, test))
     print('\n')
 
     gold = [O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O]
     test = [O, O, B, I, I, I, O, O, O, O, B, I, I, I, I, O, O]
     print(gold)
     print(test)
-    print(score(gold, test))
+    print(score_from_iob(gold, test))
     print('\n')
 
     gold = [O, O, B, I, I, I, O, O, O, O, B, I, I, I, O, O, O]
     test = [O, B, I, O, O, B, I, O, O, B, I, O, O, B, I, O, O]
     print(gold)
     print(test)
-    print(score(gold, test))
+    print(score_from_iob(gold, test))
     print('\n')
 
     gold = [O, O, B + m, I + m, I + m, I + m, O, O, O, O, B + d, I + d, I + d, I + d, I + d, O, O]
     test = [O, O, B + m, I + m, I + m, I + m, O, O, O, O, B + m, I + m, I + m, I + m, I + m, O, O]
     print(gold)
     print(test)
-    print(score(gold, test))
+    print(score_from_iob(gold, test))
     print('\n')

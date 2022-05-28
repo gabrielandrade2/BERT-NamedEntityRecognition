@@ -2,13 +2,12 @@ import glob
 import os
 import re
 
-import mojimoji
 import pandas as pd
 import xlrd
 
 
 def normalizeText(text):
-    text = mojimoji.zen_to_han(text, kana=False)
+    # text = mojimoji.zen_to_han(text, kana=False)
     return re.search(r'[一-龯ぁ-ゔゞァ-・ヽヾ゛゜ーA-z -]*', text).group()
 
 

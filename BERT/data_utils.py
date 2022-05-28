@@ -1,6 +1,3 @@
-import mojimoji
-
-
 def load_dataset(path):
     with open(path, 'r') as f:
         lines = f.read()
@@ -15,7 +12,6 @@ def load_dataset(path):
         sent_label = []
         for l in line:
             token, tag = l.split("\t")
-            sent.append(mojimoji.zen_to_han(token, kana=False))
             sent_label.append(tag)
 
         data.append(sent)

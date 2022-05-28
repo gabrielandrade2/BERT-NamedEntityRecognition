@@ -1,3 +1,4 @@
+import mojimoji
 import pandas as pd
 from thefuzz import fuzz
 
@@ -15,12 +16,13 @@ class HyakuyakuList:
         self.df = pd.read_excel(path)
 
     def get_surface_forms(self):
-        return self.df['出現形'].to_list()
+        return set(self.df['出現形'].dropna())
 
     def get_general_names(self):
-        return self.df['一般名'].to_list()
+        return set(self.df['一般名'].dropna())
 
     def get_english_translation(self, term):
+        idx = None
         for column_name in ['出現形', '一般名']:
             column = self.df[column_name]
             matches = column[column == term]
@@ -70,14 +72,15 @@ class HyakuyakuDrugMatcher(DrugNameMatcher):
         self.list = hyakuyaku_list
         self.matching_method = matching_method
         candidate_list = self.list.get_surface_forms()
-        # Order list by longer candidates first
-        candidate_list = sorted(candidate_list, key=len, reverse=True)
+        candidate_list = candidate_list.union(self.list.get_general_names())
         # Ignore terms with 2 characters or less
-        self.candidate_list = list(filter(lambda x: len(x) > 2, candidate_list))
+        candidate_list = set(filter(lambda x: len(x) > 2, candidate_list))
+        # Order list by longer candidates first
+        self.candidate_list = sorted(candidate_list, key=len, reverse=True)
 
     def match(self, text):
         matches = list()
-        i = 0
+        text = mojimoji.han_to_zen(text)
         for entry in self.candidate_list:
             matches.extend(self.matching_method(text, entry, ignore=matches))
         return matches

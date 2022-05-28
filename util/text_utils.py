@@ -157,19 +157,20 @@ class DrugNameMatcher(ABC):
             else:
                 end = max
 
-            start = text1.find(text2, start, end)
+            while True:
+                start = text1.find(text2, start, end)
 
-            # Found nothing
-            if start == -1:
-                # Reached the end
-                if end == max:
-                    return out
-                # Jump over next ignore item
+                # Found nothing
+                if start == -1:
+                    # Reached the end
+                    if end == max:
+                        return out
+                    # Jump over next ignore item
+                    else:
+                        start = item[1]
+                    break
+
+                # Found something
                 else:
-                    start = item[1]
-                    continue
-
-            # Found something
-            else:
-                out.append((start, start + length, text2))
-                start += length
+                    out.append((start, start + length, text2))
+                    start += length

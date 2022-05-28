@@ -31,7 +31,6 @@ def predict_file(file, output_file, model):
         except KeyError:
             continue
 
-
         try:
             sentences, labels = predict_from_sentences_list(model, [text], True)
             tagged_sentences = list()
@@ -39,6 +38,15 @@ def predict_file(file, output_file, model):
                 tagged_sentence = iob_util.convert_iob_to_xml(sent, label)
                 tagged_sentence = matcher.match(tagged_sentence)
                 tagged_sentences.append(tagged_sentence)
+
+                # validate
+                try:
+                    iob_util.convert_xml_to_taglist(tagged_sentence, 'C')
+                    iob_util.convert_xml_to_taglist(tagged_sentence, 'M')
+                except:
+                    print('failed\n')
+                    print(tagged_sentence)
+
             output_file.write("<article id=\"{}\">\n".format(i))
             output_file.write("\n".join(tagged_sentences))
             output_file.write("\n</article>\n")
@@ -53,9 +61,9 @@ def predict_file(file, output_file, model):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Predict jst data')
-    parser.add_argument('--model', type=str, help='Model')
-    parser.add_argument('--input', type=str, nargs="+", help='Input files')
-    parser.add_argument('--output', type=str, help='Output folder')
+    parser.add_argument('--model', type=str, help='Model', required=True)
+    parser.add_argument('--input', type=str, nargs="+", help='Input files', required=True)
+    parser.add_argument('--output', type=str, help='Output folder', required=True)
     args = parser.parse_args()
 
     # Load BERT model

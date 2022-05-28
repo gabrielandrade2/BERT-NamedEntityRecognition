@@ -1,3 +1,4 @@
+import mojimoji
 import pandas as pd
 
 from BERT.train import train_from_sentences_tags_list
@@ -27,4 +28,5 @@ if __name__ == '__main__':
 
     sentences, tags = convert_xml_text_list_to_iob_list(texts, tag_list, ignore_mismatch_tags=True,
                                                         print_failed_sentences=True)
-    model = train_from_sentences_tags_list(sentences, tags, model, '../../out/out_IM_v6')
+    sentences = [[mojimoji.han_to_zen(x) for x in s] for s in sentences]
+    model = train_from_sentences_tags_list(sentences, tags, model, '../../out/out_IM_v60_zenkaku')

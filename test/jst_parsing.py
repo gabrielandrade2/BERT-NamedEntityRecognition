@@ -16,6 +16,7 @@ keywords_count = {}
 for file in file_list:
     file_count = file_count + 1
     progress_print(file_count, len(file_list), 'File', '\n')
+    print(file)
 
     line_count = 0
     try:
@@ -24,6 +25,10 @@ for file in file_list:
             print('Line', line_count, end='\r')
 
             items = json.loads(line).items()
+            abstract = dict(items)['文献抄録(和文)']
+            if not abstract:
+                continue
+
             for key, value in items:
                 if key not in key_count:
                     key_count[key] = 0
@@ -41,7 +46,7 @@ for file in file_list:
     except Exception as e:
         print(e)
 
-with open('/Users/gabriel-he/Documents/JST data/2022-05/key_count.csv', 'w') as f:
+with open('/Users/gabriel-he/Documents/JST data/2022-05/key_count_with_abs.csv', 'w') as f:
     writer = csv.writer(f)
     writer.writerow(['key', 'count'])
     for key, value in key_count.items():
@@ -50,7 +55,7 @@ with open('/Users/gabriel-he/Documents/JST data/2022-05/key_count.csv', 'w') as 
 import operator
 
 keywords_count = sorted(keywords_count.items(), key=operator.itemgetter(1), reverse=True)
-with open('/Users/gabriel-he/Documents/JST data/2022-05/keyword_count.csv', 'w') as f:
+with open('/Users/gabriel-he/Documents/JST data/2022-05/keyword_count_with_abs.csv', 'w') as f:
     writer = csv.writer(f)
     writer.writerow(['keyword', 'count'])
     for key, value in keywords_count:

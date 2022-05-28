@@ -1,6 +1,8 @@
 import pandas as pd
 from thefuzz import fuzz
 
+from util.text_utils import EntityNormalizer
+
 
 class ManbyoDict:
 
@@ -24,7 +26,7 @@ class ManbyoDict:
     # Negativeフラグ
 
     def getTermList(self):
-        return self.df['出現形'].to_list()
+        return set(self.df['出現形'])
 
     def getTerm(self, term):
         return self.df[self.df['出現形'] == term].to_dict("records")
@@ -38,3 +40,32 @@ class ManbyoDict:
         if not return_scores:
             temp = list(map(lambda x: x[0], temp))
         return temp
+
+
+def wrapper(method, pf, term):
+    return (method(term, pf), pf)
+
+
+class ManbyoNormalizer(EntityNormalizer):
+
+    def __init__(self, database: ManbyoDict, matching_method=fuzz.token_set_ratio, threshold=0):
+        self.database = database.getTermList()
+        self.matching_method = matching_method
+        self.threshold = threshold
+
+    def normalize(self, term):
+        temp = []
+        for pf in self.database:
+            score = self.matching_method(term, pf)
+            temp.append((score, pf))
+            if score == 100:
+                break
+
+        preferred_candidate = max(temp)
+
+        score = preferred_candidate[0]
+
+        if score > self.threshold:
+            return preferred_candidate[1]
+        else:
+            return ''

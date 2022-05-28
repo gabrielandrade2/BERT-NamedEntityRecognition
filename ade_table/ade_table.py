@@ -2,6 +2,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+from tqdm import tqdm
 
 from util.text_utils import EntityNormalizer
 
@@ -17,8 +18,9 @@ def from_lists(drugs: list, entities: list, normalization_model: EntityNormalize
     if normalization_model:
         entities = [normalization_model.normalize_list(entity_list)[0] for entity_list in entities]
 
-    for drug_list, entity_list in zip(drugs, entities):
+    for drug_list, entity_list in tqdm(zip(drugs, entities)):
         for drug in drug_list:
+            drug = drug.strip()
             # Ignore matches with a single character
             if len(drug) < 2:
                 continue
@@ -31,8 +33,9 @@ def from_lists(drugs: list, entities: list, normalization_model: EntityNormalize
 
             # Check if this entity exists for the current drug row
             for named_entity in entity_list:
+                named_entity = named_entity.strip()
                 # Ignore matches with a single character
-                if len(named_entity) < 2:
+                if not named_entity or len(named_entity) < 2:
                     continue
 
                 if named_entity in drug_dict:
