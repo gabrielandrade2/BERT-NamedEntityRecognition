@@ -69,7 +69,7 @@ def predict_file(file, output_filename, model):
                     for s in out:
                         i += 1
                         output_file.write("<article id=\"{}\">\n".format(i))
-                        output_file.write('\n'.join(s))
+                        output_file.write(''.join(s))
                         output_file.write("\n</article>\n")
                 print('Processed {} articles'.format(i))
             else:
