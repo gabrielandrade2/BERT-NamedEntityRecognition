@@ -33,7 +33,7 @@ def from_lists(drugs: list, entities: list, normalization_model: EntityNormalize
 
             # Check if this entity exists for the current drug row
             for named_entity in entity_list:
-                named_entity = named_entity.strip()
+                named_entity = str(named_entity).strip()
                 # Ignore matches with a single character
                 if not named_entity or len(named_entity) < 2:
                     continue
@@ -69,12 +69,15 @@ class ADETable:
         # table = table[table.sum(0).sort_values(ascending=False)[:50].index]
         self.table = self.table[self.table.sum(0).sort_values(ascending=False).index]
 
-    def filter(self, num_drugs=None, num_symptoms=None):
+    def filter(self, num_drugs=None, num_symptoms=None, inplace=True):
         table = pd.DataFrame(self.table)
         if num_drugs:
             table = table[:num_drugs]
         if num_symptoms:
             table = table[table.sum(0).sort_values(ascending=False)[:num_symptoms].index]
+        if inplace:
+            self.table = table
+            return self
         return table
 
     def to_dataframe(self):
