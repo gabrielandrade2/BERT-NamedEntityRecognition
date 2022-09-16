@@ -11,17 +11,24 @@ def from_excel_file(file_path):
     return ADETable(pd.read_excel(file_path))
 
 
-def from_lists(drugs: list, entities: list, normalization_model: EntityNormalizer = None):
+def from_lists(drugs: list, entities: list, remove_duplicates=False, normalization_model: EntityNormalizer = None):
+    print('Generating ADE table')
     assert len(drugs) == len(entities)
     output_dict = {}
 
-    if normalization_model:
-        entities = [normalization_model.normalize_list(entity_list)[0] for entity_list in entities]
+    # if normalization_model:
+    #     entities = [normalization_model.normalize_list(entity_list)[0] for entity_list in tqdm(entities, desc='Entity normalization')]
 
-    for drug_list, entity_list in tqdm(zip(drugs, entities)):
+    for drug_list, entity_list in tqdm(zip(drugs, entities), desc='text'):
+
+        # Remove duplicates in the same document
+        if remove_duplicates:
+            drug_list = list(set(drug_list))
+            entity_list = list(set(entity_list))
+
         for drug in drug_list:
-            drug = drug.strip()
             # Ignore matches with a single character
+            drug = drug.strip()
             if len(drug) < 2:
                 continue
 
@@ -31,18 +38,27 @@ def from_lists(drugs: list, entities: list, normalization_model: EntityNormalize
             else:
                 drug_dict = {}
 
-            # Check if this entity exists for the current drug row
-            for named_entity in entity_list:
-                named_entity = str(named_entity).strip()
-                # Ignore matches with a single character
-                if not named_entity or len(named_entity) < 2:
-                    continue
-
-                if named_entity in drug_dict:
-                    count = drug_dict[named_entity] + 1
+            if not entity_list:
+                if "No Symptoms" in drug_dict:
+                    count = drug_dict["No Symptoms"] + 1
                 else:
                     count = 1
-                drug_dict[named_entity] = count
+                drug_dict["No Symptoms"] = count
+            else:
+                # Check if this entity exists for the current drug row
+                for named_entity in entity_list:
+                    named_entity = str(named_entity).strip()
+                    if normalization_model:
+                        named_entity, score = normalization_model.normalize(named_entity)
+                    # Ignore matches with a single character
+                    if not named_entity or len(named_entity) < 2:
+                        continue
+
+                    if named_entity in drug_dict:
+                        count = drug_dict[named_entity] + 1
+                    else:
+                        count = 1
+                    drug_dict[named_entity] = count
             output_dict[drug] = drug_dict
 
     return from_dict(output_dict)

@@ -24,13 +24,14 @@ class NERModel:
         self.max_size = None
 
     @classmethod
-    def load_transformers_model(cls, pre_trained_model_name, model_dir, device='cpu'):
-        tokenizer = BertJapaneseTokenizer.from_pretrained(pre_trained_model_name)
+    def load_transformers_model(cls, pre_trained_model_name, model_dir, device='cpu', local_files_only=False):
+        tokenizer = BertJapaneseTokenizer.from_pretrained(pre_trained_model_name, local_files_only=local_files_only)
 
         with open(model_dir + '/label_vocab.json', 'r') as f:
             label_vocab = json.load(f)
 
-        model = BertForTokenClassification.from_pretrained(pre_trained_model_name, num_labels=len(label_vocab))
+        model = BertForTokenClassification.from_pretrained(pre_trained_model_name, num_labels=len(label_vocab),
+                                                           local_files_only=local_files_only)
         model_path = model_dir + '/final.model'
         model.load_state_dict(torch.load(model_path, map_location=device))
 
@@ -39,7 +40,7 @@ class NERModel:
     def set_max_size(self, max_size):
         self.max_size = max_size
 
-    def train(self, x, y, max_epoch=10, lr=3e-5, batch_size=8, val=None, outputdir=None):
+    def train(self, x, y, max_epoch=10, lr=3e-5, batch_size=16, val=None, outputdir=None):
         model = self.model
         device = self.device
         max_size = self.max_size
@@ -54,19 +55,18 @@ class NERModel:
             val_data = data_utils.Batch(val[0], val[1], batch_size=batch_size)
             val_loss = []
 
-        optimizer = optim.Adam(model.parameters(), lr=lr)
+        optimizer = optim.AdamW(model.parameters(), lr=lr)
         total_step = int((len(data) // batch_size) * max_epoch)
         scheduler = get_linear_schedule_with_warmup(optimizer, int(total_step * 0.1), total_step)
 
         losses = []
         model.to(device)
-        for epoch in tqdm(range(max_epoch)):
-            print('EPOCH :', epoch + 1)
+        for epoch in tqdm(range(max_epoch), desc="epoch", ncols=100):
             model.train()
             all_loss = 0
             step = 0
 
-            for sent, label, _ in data:
+            for sent, label, _ in tqdm(data, leave=False, desc="batch", ncols=100, total=len(data) / data.batch_size):
                 sent = torch.tensor(sent).to(device)
                 label = torch.tensor(label).to(device)
                 mask = [[float(i > 0) for i in ii] for ii in sent]
@@ -90,7 +90,8 @@ class NERModel:
                 all_loss = 0
                 step = 0
 
-                for sent, label, _ in val_data:
+                for sent, label, _ in tqdm(val_data, leave=False, desc="batch", ncols=100,
+                                           total=len(val_data) / val_data.batch_size):
                     sent = torch.tensor(sent).to(device)
                     label = torch.tensor(label).to(device)
                     mask = [[float(i > 0) for i in ii] for ii in sent]
@@ -130,6 +131,7 @@ class NERModel:
 
         res = []
 
+        # for sent, _, _ in tqdm(data, desc="prediction", ncols=100, total=len(data)/data.batch_size, leave=False):
         for sent, _, _ in data:
             sent = torch.tensor(sent).to(device)
             mask = [[float(i > 0) for i in ii] for ii in sent]
@@ -183,7 +185,7 @@ class NERModel:
             processed_sentence = list()
             processed_tag_sentence = list()
             for character, tag_character in zip(sentence, tag_sentence):
-                tokenized = self.tokenizer.tokenize(character)
+                tokenized = self.tokenizer.tokenize(mojimoji.han_to_zen(character))
                 last_tag = str()
                 for token in tokenized:
                     if token == '' or token == ' ':
@@ -204,11 +206,12 @@ class NERModel:
         id2label = {v: k for k, v in self.vocabulary.items()}
         return [[id2label[t] for t in tag] for tag in prediction]
 
-    @staticmethod
-    def __remove_label_padding(sentences, labels):
+    def __remove_label_padding(self, sentences, labels):
         new_labels = list()
         for sent, label in zip(sentences, labels):
             new_labels.append(label[:len(sent) - 1])
+
+        new_labels = [l if l != self.vocabulary[PAD_TAG] else self.vocabulary["O"] for l in new_labels]
         return new_labels
 
     def convert_ids_to_tokens(self, embeddings):
