@@ -6,23 +6,11 @@ from util.iob_util import convert_xml_text_to_iob
 from util.text_utils import *
 
 
-def xml_to_articles(file_path, return_iterator=False):
-    """Extract all instances of <article> into a list, from a given xml file.
+class Article:
 
-    :param file_path: The path to the xml file.
-    :param return_iterator: For huge files, it returns an iterator that read the file entry by entry instead of loading
-    everything into memory.
-    :return: List of strings, containing all the articles as found in the file.
-    """
-
-    try:
-        reader = ArticleReader(file_path)
-    except:
-        reader = IncrementalXMLReader(file_path)
-    if return_iterator:
-        return reader
-    else:
-        return [text for text in reader]
+    def __init__(self, text, headers=None):
+        self.text = text
+        self.headers = headers
 
 
 class ArticleReader:
@@ -31,19 +19,22 @@ class ArticleReader:
         self.file = open(file_path, 'r')
         if next(self.file).strip() != '<articles>':
             raise Exception("Unsupported file: {}", file_path)
+        self.header_matcher = re.compile(r'([^ ]*)="?([^"]*)"?[ >]')
 
     def __iter__(self):
         return self
 
     def __next__(self):
         # Get next <article> entry
-        while ('<article' not in next(self.file)):
+        line = next(self.file)
+        while ('<article' not in line):
             continue
         lines = []
+        headers = dict(self.header_matcher.findall(line))
         while (True):
             line = next(self.file)
             if line == '</article>\n':
-                return ''.join(lines)
+                return Article(''.join(lines), headers)
             lines.append(line)
 
 
@@ -59,7 +50,8 @@ class IncrementalXMLReader:
         _, elem = next(self.parser)
         text = self.__stringify_children(elem)
         text = text.strip()
-        return text
+        headers = dict(elem.attrib)
+        return Article(text, headers)
 
     @staticmethod
     def __stringify_children(node):
@@ -74,6 +66,41 @@ class IncrementalXMLReader:
         return s
 
 
+def xml_to_articles(file_path, return_iterator=False):
+    """Extract all instances of <article> into a list of Article, from a given xml file.
+
+    :param file_path: The path to the xml file.
+    :param return_iterator: For huge files, it returns an iterator that read the file entry by entry instead of loading
+    everything into memory.
+    :return: List of Article, containing all the articles as found in the file.
+    """
+
+    try:
+        reader = ArticleReader(file_path)
+    except:
+        reader = IncrementalXMLReader(file_path)
+    if return_iterator:
+        return reader
+    else:
+        return [text for text in reader]
+
+
+def xml_to_article_texts(file_path, return_iterator=False):
+    """Extract all instances of <article> into a text list, from a given xml file.
+
+    :param file_path: The path to the xml file.
+    :param return_iterator: For huge files, it returns an iterator that read the file entry by entry instead of loading
+    everything into memory.
+    :return: List of strings, containing all the articles as found in the file.
+    """
+
+    articles = xml_to_articles(file_path, return_iterator)
+    if return_iterator:
+        yield from (article.text for article in articles)
+    else:
+        return [article.text for article in articles]
+
+
 def convert_xml_to_dataframe(file, tag_list, print_info=True):
     """ Converts a corpus xml file to a dataframe.
 
@@ -84,7 +111,7 @@ def convert_xml_to_dataframe(file, tag_list, print_info=True):
     """
 
     # Preprocess
-    articles = xml_to_articles(file)
+    articles = xml_to_article_texts(file)
     articles = preprocessing(articles)
     f = open("out/iob.iob", 'w')
     article_index = 0
@@ -183,7 +210,7 @@ def __prepare_texts(file, should_split_sentences):
     :param should_split_sentences: Should the sentences from an article be split.
     :return: The list of string with the desired format.
     """
-    articles = xml_to_articles(file)
+    articles = xml_to_article_texts(file)
     articles = preprocessing(articles)
 
     if should_split_sentences:
