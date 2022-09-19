@@ -309,23 +309,26 @@ def convert_xml_text_to_iob(sent, tag_list=None, attr=None, tokenizer=list, igno
     return [item for item in iob if item[0] != '\n']
 
 
-def convert_xml_text_list_to_iob_list(texts, tag_list, ignore_mismatch_tags=True, print_failed_sentences=False):
+def convert_xml_text_list_to_iob_list(texts, tag_list=None, attr=None, ignore_mismatch_tags=True,
+                                      print_failed_sentences=False):
     """Convert a list of texts with xml tags into iob list format.
 
     :param texts: List of xml texts (List(str))
     :param tag_list: List of tags to be extracted (List(str))
+    :param attr: List of tag attributes to be extracted (List(str))
     :param ignore_mismatch_tags: Should it try to recover if tags are missing?
     :param print_failed_sentences: Should it print the failed sentences for debug purposes?
     :return:
     """
     items = list()
     tags = list()
+    dropped = list()
     i = 0
     for t in texts:
         sent = list()
         tag = list()
         try:
-            iob = convert_xml_text_to_iob(t, tag_list, ignore_mismatch_tags=ignore_mismatch_tags)
+            iob = convert_xml_text_to_iob(t, tag_list, attr, ignore_mismatch_tags=ignore_mismatch_tags)
             # Convert tuples into lists
             for item in iob:
                 if item[0] == ' ':
@@ -336,11 +339,14 @@ def convert_xml_text_list_to_iob_list(texts, tag_list, ignore_mismatch_tags=True
             tags.append(tag)
         except XMLSyntaxError as e:
             if print_failed_sentences:
+                dropped.append(i)
                 print("Skipping text with xml syntax error, id: " + str(i))
                 print(t)
             elif not ignore_mismatch_tags:
                 raise e
         i = i + 1
+    if print_failed_sentences:
+        return items, tags, dropped
     return items, tags
 
 
@@ -415,3 +421,4 @@ if __name__ == '__main__':
     convert_taglist_to_xml(untagged_text, tags)
     untagged_text, tags = convert_xml_to_taglist(text)
     print(tags)
+

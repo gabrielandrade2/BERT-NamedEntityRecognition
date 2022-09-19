@@ -11,7 +11,7 @@ from BERT.predict import *
 from util import iob_util
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Predict jst data')
+    parser = argparse.ArgumentParser(description='Predict OICI data')
     parser.add_argument('--model', type=str, help='Model')
     parser.add_argument('--input', type=str, nargs="+", help='Input files')
     parser.add_argument('--output', type=str, help='Output folder')

@@ -107,7 +107,8 @@ def convert_xml_to_dataframe(file, tag_list, print_info=True):
     return df
 
 
-def convert_xml_file_to_iob_list(file, tag_list, should_split_sentences=False, ignore_mismatch_tags=True):
+def convert_xml_file_to_iob_list(file, tag_list=None, attr_list=None, should_split_sentences=False,
+                                 ignore_mismatch_tags=True):
     """Converts a corpus xml file to a tuple of strings and IOB tags.
     The strings can be split by article or sentences.
 
@@ -129,7 +130,7 @@ def convert_xml_file_to_iob_list(file, tag_list, should_split_sentences=False, i
         sent = list()
         tag = list()
         try:
-            iob = convert_xml_text_to_iob(t, tag_list, ignore_mismatch_tags=ignore_mismatch_tags)
+            iob = convert_xml_text_to_iob(t, tag_list, attr_list, ignore_mismatch_tags=ignore_mismatch_tags)
             # Convert tuples into lists
             for item in iob:
                 if item[0] == ' ':
