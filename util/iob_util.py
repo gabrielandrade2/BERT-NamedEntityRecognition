@@ -320,6 +320,7 @@ def convert_xml_text_list_to_iob_list(texts, tag_list=None, attr=None, ignore_mi
     :param print_failed_sentences: Should it print the failed sentences for debug purposes?
     :return:
     """
+    print("Converting xml to iob...")
     items = list()
     tags = list()
     dropped = list()

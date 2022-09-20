@@ -1,6 +1,7 @@
 import lxml.etree as etree
 import pandas as pd
 from lxml.etree import XMLSyntaxError, XMLParser
+from tqdm import tqdm
 
 from util.iob_util import convert_xml_text_to_iob
 from util.text_utils import *
@@ -26,9 +27,9 @@ class ArticleReader:
 
     def __next__(self):
         # Get next <article> entry
-        line = next(self.file)
+        line = ""
         while ('<article' not in line):
-            continue
+            line = next(self.file)
         lines = []
         headers = dict(self.header_matcher.findall(line))
         while (True):
@@ -74,7 +75,7 @@ def xml_to_articles(file_path, return_iterator=False):
     everything into memory.
     :return: List of Article, containing all the articles as found in the file.
     """
-
+    print("Parsing XML file...")
     try:
         reader = ArticleReader(file_path)
     except:
@@ -82,7 +83,7 @@ def xml_to_articles(file_path, return_iterator=False):
     if return_iterator:
         return reader
     else:
-        return [text for text in reader]
+        return [text for text in tqdm(reader)]
 
 
 def xml_to_article_texts(file_path, return_iterator=False):
@@ -96,7 +97,7 @@ def xml_to_article_texts(file_path, return_iterator=False):
 
     articles = xml_to_articles(file_path, return_iterator)
     if return_iterator:
-        yield from (article.text for article in articles)
+        return (article.text for article in articles)
     else:
         return [article.text for article in articles]
 
