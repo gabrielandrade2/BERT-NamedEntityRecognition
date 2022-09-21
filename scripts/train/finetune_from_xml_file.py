@@ -2,7 +2,7 @@ import argparse
 
 import torch
 
-from BERT.Model import NERModel
+from BERT.Model import NERModel, TrainingParameters
 from BERT.train import finetune_from_xml_file
 
 if __name__ == '__main__':
@@ -19,4 +19,7 @@ if __name__ == '__main__':
     model_type = 'cl-tohoku/bert-base-japanese-char-v2'
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     model = NERModel.load_transformers_model(model_type, args.model_path, device, args.local_files_only)
-    finetune_from_xml_file(args.training_file, model, args.tags, args.output, args.attr)
+
+    parameters = TrainingParameters()
+
+    finetune_from_xml_file(args.training_file, model, args.tags, args.output, parameters, args.attr)

@@ -15,6 +15,34 @@ CLS_TAG = '[CLS]'
 PAD_TAG = '[PAD]'
 
 
+class TrainingParameters:
+
+    def __init__(self):
+        # Load default parameters
+        self.__dict__ = {
+            'max_epochs': 10,
+            'learning_rate': 3e-5,
+            'batch_size': 16,
+            'max_length': 512,
+        }
+
+    def set_max_epochs(self, max_epochs):
+        self.__dict__['max_epochs'] = max_epochs
+        return self
+
+    def set_batch_size(self, batch_size):
+        self.__dict__['batch_size'] = batch_size
+        return self
+
+    def set_learning_rate(self, learning_rate):
+        self.__dict__['learning_rate'] = learning_rate
+        return self
+
+    def set_max_length(self, max_length):
+        self.__dict__['max_length'] = max_length
+        return self
+
+
 class NERModel:
     def __init__(self, pre_trained_model, tokenizer, vocabulary, device='cpu'):
         self.model = pre_trained_model
@@ -40,13 +68,20 @@ class NERModel:
     def set_max_size(self, max_size):
         self.max_size = max_size
 
-    def train(self, x, y, max_epoch=10, lr=3e-5, batch_size=16, val=None, outputdir=None):
+    def train(self, x, y, parameters: TrainingParameters = None, val=None, outputdir=None):
         model = self.model
         device = self.device
         max_size = self.max_size
 
         if not max_size:
             max_size = max([len(i) for i in x])
+
+        # Parse parameters
+        if parameters is None:
+            parameters = TrainingParameters()
+        max_epoch = parameters.max_epochs
+        batch_size = parameters.batch_size
+        lr = parameters.learning_rate
 
         os.makedirs(outputdir, exist_ok=True)
 

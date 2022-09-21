@@ -1,5 +1,7 @@
 import pandas as pd
+from sklearn.model_selection import train_test_split
 
+from BERT.evaluate import evaluate
 from BERT.train import train_from_sentences_tags_list
 from util.iob_util import convert_xml_text_list_to_iob_list
 from util.text_utils import *
@@ -21,5 +23,9 @@ if __name__ == '__main__':
     sentences, tags, _ = convert_xml_text_list_to_iob_list(texts, tag_list, attr_list, ignore_mismatch_tags=True,
                                                            print_failed_sentences=True)
 
+    train_x, test_x, train_y, test_y = train_test_split(sentences, tags, test_size=0.2)
+
     # sentences = [[mojimoji.han_to_zen(x) for x in s] for s in sentences]
-    model = train_from_sentences_tags_list(sentences, tags, model, '../../out/out_IM_v6_negative')
+    model = train_from_sentences_tags_list(train_x, train_y, model, '../../out/out_IM_v6_negative')
+
+    evaluate(model, test_x, test_y)
