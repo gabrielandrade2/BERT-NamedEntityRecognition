@@ -6,11 +6,12 @@ from util.xml_parser import convert_xml_file_to_iob_list
 
 if __name__ == '__main__':
     # Load BERT model
-    model = NERModel.load_transformers_model('cl-tohoku/bert-base-japanese-char-v2', '../out/out_IM_v6')
+    model = NERModel.load_transformers_model('cl-tohoku/bert-base-japanese-char-v2', '../../out/out_IM_v6')
     tokenizer = model.tokenizer
     label_vocab = model.vocabulary
 
-    sentences, tags = convert_xml_file_to_iob_list('../data/drugHistoryCheck.xml', ['d'], should_split_sentences=True)
+    sentences, tags = convert_xml_file_to_iob_list('../../data/drugHistoryCheck.xml', ['d'],
+                                                   should_split_sentences=True)
 
     # Convert 'd' tags to 'C'
     tags = [[t.replace('d', 'C') for t in l] for l in tags]
