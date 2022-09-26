@@ -13,6 +13,7 @@ from util import text_utils
 
 CLS_TAG = '[CLS]'
 PAD_TAG = '[PAD]'
+UNK_TAG = '[UNK]'
 
 
 class TrainingParameters:
@@ -197,11 +198,15 @@ class NERModel:
             temp.append(sentences)
             sentences = temp
 
+        if isinstance(sentences, list):
+            if isinstance(sentences[0], list):
+                sentences = [''.join(sent) for sent in sentences]
+
         if split_sentences:
             single_item = len(sentences) == 1
             sentences = text_utils.split_sentences(sentences, single_item)
 
-        sentences = [mojimoji.han_to_zen(sentence) for sentence in sentences]
+        sentences = [''.join(s) for s in self.__convert_to_zenkaku(sentences)]
         tokenized_sentences = [self.tokenizer.tokenize(t) for t in sentences]
         return [self.tokenizer.convert_tokens_to_ids([CLS_TAG] + t) for t in tokenized_sentences]
 
@@ -221,7 +226,8 @@ class NERModel:
             processed_sentence = list()
             processed_tag_sentence = list()
             for character, tag_character in zip(sentence, tag_sentence):
-                tokenized = self.tokenizer.tokenize(mojimoji.han_to_zen(character))
+                tokenized = self.tokenizer.tokenize(
+                    mojimoji.han_to_zen(character) if character not in [CLS_TAG, PAD_TAG, UNK_TAG] else character)
                 last_tag = str()
                 for token in tokenized:
                     if token == '' or token == ' ':
@@ -252,4 +258,8 @@ class NERModel:
 
     def convert_ids_to_tokens(self, embeddings):
         temp = [self.tokenizer.convert_ids_to_tokens(t)[1:] for t in embeddings]
-        return [[mojimoji.han_to_zen(t) for t in sent] for sent in temp]
+        return self.__convert_to_zenkaku(temp)
+
+    def __convert_to_zenkaku(self, tokens):
+        return [[mojimoji.han_to_zen(t) if t not in [CLS_TAG, PAD_TAG, UNK_TAG] else t for t in sent] for sent in
+                tokens]

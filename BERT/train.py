@@ -8,7 +8,7 @@ from transformers import BertForTokenClassification, BertJapaneseTokenizer
 from BERT import bert_utils
 from BERT.Model import NERModel
 from util.iob_util import convert_xml_text_list_to_iob_list
-from util.text_utils import split_sentences
+from util.text_utils import split_sentences, exclude_long_sentences
 from util.xml_parser import convert_xml_file_to_iob_list
 
 
@@ -31,7 +31,7 @@ def train_from_xml_texts(texts, model_name, tag_list, output_dir, parameters=Non
 def train_from_sentences_tags_list(sentences, tags, model_name, output_dir, parameters=None, device=None):
     os.makedirs(output_dir, exist_ok=True)
 
-    sentences, tags = __exclude_long_sentences(512, sentences, tags)
+    sentences, tags = exclude_long_sentences(512, sentences, tags)
 
     if not device:
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -49,7 +49,7 @@ def train_from_sentences_tags_list(sentences, tags, model_name, output_dir, para
         json.dump(label_vocab, f, ensure_ascii=False)
 
     ##### Split in train/validation #####
-    train_x, validation_x, train_y, validation_y = train_test_split(sentences, tags, test_size=0.2)
+    train_x, validation_x, train_y, validation_y = train_test_split(sentences, tags, test_size=0.1)
 
     # Convert to BERT data model
     train_x, train_y = bert_utils.dataset_to_bert_input(train_x, train_y, tokenizer, label_vocab)
@@ -80,10 +80,10 @@ def finetune_from_xml_texts(texts, model: NERModel, tag_list, output_dir, parame
 
 
 def finetune_from_sentences_tags_list(sentences, tags, model: NERModel, output_dir=None, parameters=None):
-    sentences, tags = __exclude_long_sentences(512, sentences, tags)
+    sentences, tags = exclude_long_sentences(512, sentences, tags)
 
     ##### Split in train/validation #####
-    train_x, validation_x, train_y, validation_y = train_test_split(sentences, tags, test_size=0.2)
+    train_x, validation_x, train_y, validation_y = train_test_split(sentences, tags, test_size=0.1)
 
     # Convert to BERT data model
     train_x, train_y = bert_utils.dataset_to_bert_input(train_x, train_y, model.tokenizer, model.vocabulary)
@@ -100,16 +100,3 @@ def finetune_from_sentences_tags_list(sentences, tags, model: NERModel, output_d
 
     return model
 
-
-def __exclude_long_sentences(max_length: int, sentences: list, tags: list):
-    print(len(sentences))
-    tmp_s = []
-    tmp_t = []
-    for s, t in zip(sentences, tags):
-        if len(s) <= max_length:
-            tmp_s.append(s)
-            tmp_t.append(t)
-    sentences = tmp_s
-    tags = tmp_t
-    print(len(sentences))
-    return sentences, tags

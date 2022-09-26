@@ -6,7 +6,7 @@ from seqeval.scheme import IOB2
 
 from BERT.Model import NERModel
 from util.text_utils import split_sentences, preprocessing
-from util.xml_parser import xml_to_articles, drop_texts_with_mismatched_tags, \
+from util.xml_parser import xml_to_article_texts, drop_texts_with_mismatched_tags, \
     convert_xml_file_to_iob_list
 
 
@@ -21,13 +21,13 @@ def flatten_list(list):
 
 if __name__ == '__main__':
     ##### Load model #####
-    model = NERModel.load_transformers_model('cl-tohoku/bert-base-japanese-char-v2', '../../out/out')
+    model = NERModel.load_transformers_model('cl-tohoku/bert-base-japanese-char-v2', '../../out/out_IM_v6_negative')
     TAG_LIST = ['d']
 
     #### Load data #####
     # Get clean articles from file to tag
     xmlFile = '../../data/drugHistoryCheck.xml'
-    texts = xml_to_articles(xmlFile)
+    texts = xml_to_article_texts(xmlFile)
     texts = preprocessing(texts)
     texts = split_sentences(texts)
     texts = drop_texts_with_mismatched_tags(texts)

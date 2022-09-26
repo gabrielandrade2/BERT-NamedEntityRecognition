@@ -47,6 +47,20 @@ def split_sentences(texts, return_flat_list=True):
     return processed_texts
 
 
+def exclude_long_sentences(max_length: int, sentences: list, tags: list):
+    print(len(sentences))
+    tmp_s = []
+    tmp_t = []
+    for s, t in zip(sentences, tags):
+        if len(s) <= max_length:
+            tmp_s.append(s)
+            tmp_t.append(t)
+    sentences = tmp_s
+    tags = tmp_t
+    print(len(sentences))
+    return sentences, tags
+
+
 def tag_matches(text, tags, tag_type):
     """ Add HTML tags to a text.
 
