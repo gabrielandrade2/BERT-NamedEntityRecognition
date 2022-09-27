@@ -26,6 +26,7 @@ class TrainingParameters:
             'learning_rate': 3e-5,
             'batch_size': 16,
             'max_length': 512,
+            'optimizer': optim.AdamW,
         }
 
     def set_max_epochs(self, max_epochs):
@@ -44,6 +45,9 @@ class TrainingParameters:
         self.__dict__['max_length'] = max_length
         return self
 
+    def set_optimizer(self, optimizer):
+        self.__dict__['optimizer'] = optimizer
+        return self
 
 class NERModel:
     def __init__(self, pre_trained_model, tokenizer, vocabulary, device='cpu'):
@@ -91,8 +95,9 @@ class NERModel:
         if val is not None:
             val_data = data_utils.Batch(val[0], val[1], batch_size=batch_size)
             val_loss = []
+            all_f1 = []
 
-        optimizer = optim.AdamW(model.parameters(), lr=lr)
+        optimizer = parameters.optimizer(model.parameters(), lr=lr)
         total_step = int((len(data) // batch_size) * max_epoch)
         scheduler = get_linear_schedule_with_warmup(optimizer, int(total_step * 0.1), total_step)
 
@@ -128,7 +133,7 @@ class NERModel:
                     model.eval()
                     all_loss = 0
                     step = 0
-                    f1 = 0
+
 
                     gold = []
                     pred = []
@@ -157,6 +162,7 @@ class NERModel:
                     gold = self.convert_prediction_to_labels(gold)
                     pred = self.convert_prediction_to_labels(pred)
                     f1 = f1_score(gold, pred)
+                    all_f1.append(f1)
 
                     output_path = outputdir + '/checkpoint{}.model'.format(len(val_loss) - 1)
                     torch.save(model.state_dict(), output_path)
@@ -166,7 +172,7 @@ class NERModel:
 
         if val is not None:
             min_epoch = np.argmin(val_loss)
-            print('BEST EPOCH:' + min_epoch)
+            print('BEST EPOCH:' + str(min_epoch))
             model_path = outputdir + '/checkpoint{}.model'.format(min_epoch)
             model.load_state_dict(torch.load(model_path))
 
