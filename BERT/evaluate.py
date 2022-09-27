@@ -12,13 +12,13 @@ def evaluate(model: NERModel, test_sentences: list, test_labels: list):
 
     test_sentences, test_labels = exclude_long_sentences(512, test_sentences, test_labels)
 
-    # Normalize to same tokenization as BERT
-    test_sentences, test_labels = model.normalize_tagged_dataset(test_sentences, test_labels)
-
     # Predict outputs
     data_x = model.prepare_sentences(test_sentences)
     predicted_labels = model.predict(data_x)
     data_x = model.convert_ids_to_tokens(data_x)
+
+    # Normalize to same tokenization as BERT
+    test_sentences, test_labels = model.normalize_tagged_dataset(test_sentences, test_labels)
 
     # Evaluate model
     if not (list_size(test_sentences) == list_size(data_x) == list_size(test_labels) == list_size(predicted_labels)):

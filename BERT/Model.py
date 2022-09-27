@@ -49,6 +49,7 @@ class TrainingParameters:
         self.__dict__['optimizer'] = optimizer
         return self
 
+
 class NERModel:
     def __init__(self, pre_trained_model, tokenizer, vocabulary, device='cpu'):
         self.model = pre_trained_model
