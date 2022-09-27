@@ -4,6 +4,7 @@ import os
 import mojimoji
 import numpy as np
 import torch
+from seqeval.metrics import f1_score
 from torch import optim
 from tqdm import tqdm
 from transformers import get_linear_schedule_with_warmup, BertJapaneseTokenizer, BertForTokenClassification
@@ -97,38 +98,14 @@ class NERModel:
 
         losses = []
         model.to(device)
-        for epoch in tqdm(range(max_epoch), position=0, desc="epoch", ncols=100):
-            model.train()
-            all_loss = 0
-            step = 0
-
-            for sent, label, _ in tqdm(data, position=1, leave=False, desc="batch", ncols=100,
-                                       total=int(len(data) / data.batch_size)):
-                sent = torch.tensor(sent).to(device)
-                label = torch.tensor(label).to(device)
-                mask = [[float(i > 0) for i in ii] for ii in sent]
-                mask = torch.tensor(mask).to(device)
-
-                output = model(sent, attention_mask=mask, labels=label)
-                loss = output[0]
-                all_loss += loss.item()
-
-                loss.backward()
-                optimizer.step()
-                scheduler.step()
-                model.zero_grad()
-
-                step += 1
-
-            losses.append(all_loss / step)
-
-            if val is not None:
-                model.eval()
+        with tqdm(range(max_epoch), position=0, desc="epoch", ncols=100) as t:
+            for epoch in t:
+                model.train()
                 all_loss = 0
                 step = 0
 
-                for sent, label, _ in tqdm(val_data, position=1, leave=False, desc="batch", ncols=100,
-                                           total=len(val_data) / val_data.batch_size):
+                for sent, label, _ in tqdm(data, position=1, leave=False, desc="batch", ncols=100,
+                                           total=int(len(data) / data.batch_size)):
                     sent = torch.tensor(sent).to(device)
                     label = torch.tensor(label).to(device)
                     mask = [[float(i > 0) for i in ii] for ii in sent]
@@ -138,14 +115,58 @@ class NERModel:
                     loss = output[0]
                     all_loss += loss.item()
 
+                    loss.backward()
+                    optimizer.step()
+                    scheduler.step()
+                    model.zero_grad()
+
                     step += 1
-                val_loss.append(all_loss / step)
-                output_path = outputdir + '/checkpoint{}.model'.format(len(val_loss) - 1)
-                torch.save(model.state_dict(), output_path)
+
+                losses.append(all_loss / step)
+
+                if val is not None:
+                    model.eval()
+                    all_loss = 0
+                    step = 0
+                    f1 = 0
+
+                    gold = []
+                    pred = []
+
+                    for sent, label, _ in tqdm(val_data, position=1, leave=False, desc="batch", ncols=100,
+                                               total=len(val_data) / val_data.batch_size):
+                        sent = torch.tensor(sent).to(device)
+                        label = torch.tensor(label).to(device)
+                        mask = [[float(i > 0) for i in ii] for ii in sent]
+                        mask = torch.tensor(mask).to(device)
+
+                        output = model(sent, attention_mask=mask, labels=label)
+                        loss = output[0]
+                        all_loss += loss.item()
+
+                        # Store gold and prediction to calculate metrics
+                        gold.extend(label.detach().cpu().numpy()[:, 1:].tolist())
+                        pred.extend(np.argmax(output[1].detach().cpu().numpy(), axis=2)[:, 1:].tolist())
+
+                        step += 1
+
+                    val_loss.append(all_loss / step)
+                    # Calculate metrics
+                    gold = self.__remove_label_padding(x, gold)
+                    pred = self.__remove_label_padding(x, pred)
+                    gold = self.convert_prediction_to_labels(gold)
+                    pred = self.convert_prediction_to_labels(pred)
+                    f1 = f1_score(gold, pred)
+
+                    output_path = outputdir + '/checkpoint{}.model'.format(len(val_loss) - 1)
+                    torch.save(model.state_dict(), output_path)
+
+                t.set_postfix(loss=losses[-1], val_loss=val_loss[-1] if val is not None else 0,
+                              val_f1=f1 if val is not None else 0)
 
         if val is not None:
             min_epoch = np.argmin(val_loss)
-            # print(min_epoch)
+            print('BEST EPOCH:' + min_epoch)
             model_path = outputdir + '/checkpoint{}.model'.format(min_epoch)
             model.load_state_dict(torch.load(model_path))
 

@@ -64,13 +64,12 @@ def pad_sequence(seq, max_length=512, pad_value=0, issort=True):
 
 
 class Batch(object):
-    def __init__(self, data, label, batch_size=8, pad_value=0, max_size=512, device=None, sort=True):
+    def __init__(self, data, label, batch_size=8, pad_value=0, max_size=512, sort=True):
         self.data = data
         self.label = label
         self.batch_size = batch_size
         self.pad_value = pad_value
         self.max_size = max_size
-        self.device = device
         self.sort = sort
 
     def __len__(self):
@@ -126,19 +125,3 @@ class Mydataset(object):
 
             yield x, l, length
 
-
-if __name__ == "__main__":
-    """
-    data, label = load_dataset("sample_data/sample_iob.iob")
-    vocab = create_vocab(data)
-    label_vocab = create_vocab(label)
-    input = data2input(data, vocab)
-    label_input = data2input(label, label_vocab)
-    batch = Batch(input, label_input, 8, 0)
-    """
-
-    dataset = Mydataset("../../sample_data/sample_iob.iob")
-    for x, l, leng in dataset:
-        print(x)
-        print(l)
-        print(leng)
