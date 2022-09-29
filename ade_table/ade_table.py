@@ -102,6 +102,12 @@ class ADETable:
     def to_excel(self, output_path):
         self.table.to_excel(output_path)
 
+    def to_excel(self, excel_writer, sheet_name=None):
+        if sheet_name:
+            self.table.to_excel(excel_writer, sheet_name=sheet_name)
+        else:
+            self.table.to_excel(excel_writer)
+
     def dump_to_file(self, output_path):
         pass
 
