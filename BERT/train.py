@@ -79,11 +79,12 @@ def finetune_from_xml_texts(texts, model: NERModel, tag_list, output_dir, parame
     return train_from_sentences_tags_list(sentences, tags, model, output_dir, parameters)
 
 
-def finetune_from_sentences_tags_list(sentences, tags, model: NERModel, output_dir=None, parameters=None):
+def finetune_from_sentences_tags_list(sentences, tags, model: NERModel, output_dir=None, parameters=None,
+                                      validation_ratio=0.1):
     sentences, tags = exclude_long_sentences(512, sentences, tags)
 
     ##### Split in train/validation #####
-    train_x, validation_x, train_y, validation_y = train_test_split(sentences, tags, test_size=0.1)
+    train_x, validation_x, train_y, validation_y = train_test_split(sentences, tags, test_size=validation_ratio)
 
     # Convert to BERT data model
     train_x, train_y = bert_utils.dataset_to_bert_input(train_x, train_y, model.tokenizer, model.vocabulary)
@@ -99,4 +100,3 @@ def finetune_from_sentences_tags_list(sentences, tags, model: NERModel, output_d
         json.dump(model.vocabulary, f, ensure_ascii=False)
 
     return model
-

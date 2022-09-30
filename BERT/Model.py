@@ -1,6 +1,7 @@
 import json
 import os
 
+import matplotlib.pyplot as plt
 import mojimoji
 import numpy as np
 import torch
@@ -135,7 +136,6 @@ class NERModel:
                     all_loss = 0
                     step = 0
 
-
                     gold = []
                     pred = []
 
@@ -172,16 +172,28 @@ class NERModel:
                               val_f1=f1 if val is not None else 0)
 
         if val is not None:
-            min_epoch = np.argmin(val_loss)
-            print('BEST EPOCH:' + str(min_epoch))
-            model_path = outputdir + '/checkpoint{}.model'.format(min_epoch)
+            best_epoch = np.argmin(val_loss)
+            # best_epoch = np.argmax(all_f1)
+            print('BEST EPOCH:' + str(best_epoch))
+            model_path = outputdir + '/checkpoint{}.model'.format(best_epoch)
             model.load_state_dict(torch.load(model_path))
+
+        x = range(max_epoch)
+        plt.plot(x, losses, label='train loss')
+        if val is not None:
+            plt.plot(x, val_loss, label='val loss')
+            plt.plot(x, all_f1, label='val f1')
+        plt.xlabel('epoch')
+        plt.title('best epoch: {}'.format(best_epoch))
+        plt.legend()
+        plt.savefig(os.path.join(outputdir, 'training.png'))
+        plt.show()
 
         torch.save(model.state_dict(), outputdir + '/final.model')
         self.model = model
         return model
 
-    def predict(self, x, return_labels=True):
+    def predict(self, x, return_labels=True, display_progress=False):
         model = self.model
         device = self.device
         max_size = self.max_size
@@ -196,8 +208,8 @@ class NERModel:
 
         res = []
 
-        # for sent, _, _ in tqdm(data, desc="prediction", ncols=100, total=len(data)/data.batch_size, leave=False):
-        for sent, _, _ in data:
+        for sent, _, _ in tqdm(data, desc="prediction", ncols=100, total=int(len(data) / data.batch_size),
+                               disable=not display_progress):
             sent = torch.tensor(sent).to(device)
             mask = [[float(i > 0) for i in ii] for ii in sent]
             mask = torch.tensor(mask).to(device)
