@@ -20,6 +20,21 @@ UNK_TAG = '[UNK]'
 
 class TrainingParameters:
 
+    @classmethod
+    def from_args(cls, args):
+        parameters = TrainingParameters()
+        parameters.__dict__.update(
+            (k, args.__dict__[k]) for k in parameters.__dict__.keys() & args.__dict__.keys() if args.__dict__[k])
+        return parameters
+
+    @classmethod
+    def add_parser_arguments(cls, parent_parser):
+        parent_parser.add_argument('--max_epochs', type=int, help='Maximum number of epochs')
+        parent_parser.add_argument('--learning_rate', type=float, help='Learning rate')
+        parent_parser.add_argument('--batch_size', type=int, help='Batch size')
+        parent_parser.add_argument('--max_length', type=int, help='Maximum length of the input sequence')
+        return parent_parser
+
     def __init__(self):
         # Load default parameters
         self.__dict__ = {
@@ -80,6 +95,7 @@ class NERModel:
         model = self.model
         device = self.device
         max_size = self.max_size
+        self.training_metrics = {}
 
         if not max_size:
             max_size = max([len(i) for i in x])
@@ -93,9 +109,9 @@ class NERModel:
 
         os.makedirs(outputdir, exist_ok=True)
 
-        data = data_utils.Batch(x, y, batch_size=batch_size, max_size=max_size)
+        data = data_utils.Batch(x, y, batch_size=batch_size, max_size=max_size, sort=True)
         if val is not None:
-            val_data = data_utils.Batch(val[0], val[1], batch_size=batch_size)
+            val_data = data_utils.Batch(val[0], val[1], batch_size=batch_size, max_size=max_size, sort=True)
             val_loss = []
             all_f1 = []
 
@@ -105,14 +121,15 @@ class NERModel:
 
         losses = []
         model.to(device)
-        with tqdm(range(max_epoch), position=0, desc="epoch", ncols=100) as t:
+        with tqdm(range(max_epoch), desc="epoch", ncols=100, position=0, leave=True) as t:
             for epoch in t:
                 model.train()
                 all_loss = 0
                 step = 0
 
-                for sent, label, _ in tqdm(data, position=1, leave=False, desc="batch", ncols=100,
-                                           total=int(len(data) / data.batch_size)):
+                for sent, label, _ in tqdm(data, desc="batch", ncols=100,
+                                           total=int(len(data) / data.batch_size),
+                                           position=0, leave=True):
                     sent = torch.tensor(sent).to(device)
                     label = torch.tensor(label).to(device)
                     mask = [[float(i > 0) for i in ii] for ii in sent]
@@ -139,8 +156,9 @@ class NERModel:
                     gold = []
                     pred = []
 
-                    for sent, label, _ in tqdm(val_data, position=1, leave=False, desc="batch", ncols=100,
-                                               total=len(val_data) / val_data.batch_size):
+                    for sent, label, _ in tqdm(val_data, desc="validation", ncols=100,
+                                               total=len(val_data) / val_data.batch_size,
+                                               position=0, leave=True):
                         sent = torch.tensor(sent).to(device)
                         label = torch.tensor(label).to(device)
                         mask = [[float(i > 0) for i in ii] for ii in sent]
@@ -158,8 +176,9 @@ class NERModel:
 
                     val_loss.append(all_loss / step)
                     # Calculate metrics
-                    gold = self.__remove_label_padding(x, gold)
-                    pred = self.__remove_label_padding(x, pred)
+                    val_sentences = val_data.get_sentences()
+                    gold = self.__remove_label_padding(val_sentences, gold)
+                    pred = self.__remove_label_padding(val_sentences, pred)
                     gold = self.convert_prediction_to_labels(gold)
                     pred = self.convert_prediction_to_labels(pred)
                     f1 = f1_score(gold, pred)
@@ -190,6 +209,9 @@ class NERModel:
         plt.show()
 
         torch.save(model.state_dict(), outputdir + '/final.model')
+        self.training_metrics['loss'] = losses
+        self.training_metrics['val_loss'] = val_loss
+        self.training_metrics['val_f1'] = all_f1
         self.model = model
         return model
 
@@ -209,7 +231,8 @@ class NERModel:
         res = []
 
         for sent, _, _ in tqdm(data, desc="prediction", ncols=100, total=int(len(data) / data.batch_size),
-                               disable=not display_progress):
+                               disable=not display_progress,
+                               position=0, leave=True):
             sent = torch.tensor(sent).to(device)
             mask = [[float(i > 0) for i in ii] for ii in sent]
             mask = torch.tensor(mask).to(device)
@@ -303,3 +326,6 @@ class NERModel:
     def __convert_to_zenkaku(self, tokens):
         return [[mojimoji.han_to_zen(t) if t not in [CLS_TAG, PAD_TAG, UNK_TAG] else t for t in sent] for sent in
                 tokens]
+
+    def get_training_metrics(self):
+        return self.training_metrics

@@ -57,40 +57,42 @@ def pad_sentence(sent, length, pad_value=0):
     return sent + [pad_value] * (length - len(sent)) if len(sent) <= length else sent[:length]
 
 
-def pad_sequence(seq, max_length=512, pad_value=0, issort=True):
+def pad_sequence(seq, issort, max_length=512, pad_value=0):
     length = len(seq[0]) if issort else len(sorted(seq, key=lambda x: len(x), reverse=True)[0])
     max_length = min(length, max_length)
     return [pad_sentence(s, max_length, pad_value) for s in seq]
 
 
 class Batch(object):
-    def __init__(self, data, label, batch_size=8, pad_value=0, max_size=512, sort=True):
-        self.data = data
-        self.label = label
+    def __init__(self, sentence, label, batch_size=8, pad_value=0, max_size=512, sort=True):
         self.batch_size = batch_size
         self.pad_value = pad_value
         self.max_size = max_size
         self.sort = sort
+        if self.sort:
+            self.data = sorted(zip(sentence, label), key=lambda x: len(x[0]), reverse=True)
+        else:
+            self.data = list(zip(sentence, label))
+
+    def get_sentences(self):
+        return [d[0] for d in self.data]
+
+    def get_labels(self):
+        return [d[1] for d in self.data]
 
     def __len__(self):
         return len(self.data)
 
     def __iter__(self):
-        data = zip(self.data, self.label)
-        if self.sort:
-            data = sorted(data, key=lambda x: len(x[0]), reverse=True)
-        else:
-            data = list(data)
-
-        for i in range(0, len(data), self.batch_size):
+        for i in range(0, len(self.data), self.batch_size):
             s_pos = i
-            e_pos = min(i + self.batch_size, len(data))
+            e_pos = min(i + self.batch_size, len(self.data))
 
-            x = [d[0] for d in data[s_pos:e_pos]]
-            l = [d[1] for d in data[s_pos:e_pos]]
-            length = [len(d[0]) for d in data[s_pos:e_pos]]
-            x = pad_sequence(x, max_length=self.max_size, pad_value=self.pad_value, issort=self.sort)
-            l = pad_sequence(l, max_length=self.max_size, pad_value=self.pad_value, issort=self.sort)
+            x = [d[0] for d in self.data[s_pos:e_pos]]
+            l = [d[1] for d in self.data[s_pos:e_pos]]
+            length = [len(d[0]) for d in self.data[s_pos:e_pos]]
+            x = pad_sequence(x, self.sort, max_length=self.max_size, pad_value=self.pad_value)
+            l = pad_sequence(l, self.sort, max_length=self.max_size, pad_value=self.pad_value)
 
             yield x, l, length
 

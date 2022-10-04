@@ -28,10 +28,21 @@ def train_from_xml_texts(texts, model_name, tag_list, output_dir, parameters=Non
     return train_from_sentences_tags_list(sentences, tags, model_name, output_dir, parameters, device)
 
 
-def train_from_sentences_tags_list(sentences, tags, model_name, output_dir, parameters=None, device=None):
+def train_from_sentences_tags_list(sentences, tags, model_name, output_dir, parameters=None, local_files_only=False,
+                                   device=None, validation_ratio=0.1):
+    ##### Split in train/validation #####
+    train_x, validation_x, train_y, validation_y = train_test_split(sentences, tags, test_size=validation_ratio)
+    return train_from_sentences_tags_list(train_x, train_y, validation_x, validation_y, model_name, output_dir,
+                                          parameters, local_files_only, device)
+
+
+def train_from_sentences_tags_list(train_x, train_y, validation_x, validation_y, model_name, output_dir,
+                                   parameters=None, local_files_only=False,
+                                   device=None):
     os.makedirs(output_dir, exist_ok=True)
 
-    sentences, tags = exclude_long_sentences(512, sentences, tags)
+    train_x, train_y = exclude_long_sentences(512, train_x, train_y)
+    validation_x, validation_y = exclude_long_sentences(512, validation_x, validation_y)
 
     if not device:
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -40,25 +51,27 @@ def train_from_sentences_tags_list(sentences, tags, model_name, output_dir, para
     print('device: ' + device)
 
     ##### Process dataset for BERT #####
-    tokenizer = BertJapaneseTokenizer.from_pretrained(model_name)
+    tokenizer = BertJapaneseTokenizer.from_pretrained(model_name, local_files_only=local_files_only)
 
     # Create vocabulary
-    label_vocab = bert_utils.create_label_vocab(tags)
+    label_vocab = bert_utils.create_label_vocab(train_y + validation_y)
     os.makedirs(output_dir, exist_ok=True)
     with open(output_dir + '/label_vocab.json', 'w') as f:
         json.dump(label_vocab, f, ensure_ascii=False)
 
-    ##### Split in train/validation #####
-    train_x, validation_x, train_y, validation_y = train_test_split(sentences, tags, test_size=0.1)
-
     # Convert to BERT data model
     train_x, train_y = bert_utils.dataset_to_bert_input(train_x, train_y, tokenizer, label_vocab)
-    validation_x, validation_y = bert_utils.dataset_to_bert_input(validation_x, validation_y, tokenizer, label_vocab)
+    if validation_x and validation_y:
+        validation_x, validation_y = bert_utils.dataset_to_bert_input(validation_x, validation_y, tokenizer,
+                                                                      label_vocab)
 
     # Get pre-trained model and fine-tune it
     pre_trained_model = BertForTokenClassification.from_pretrained(model_name, num_labels=len(label_vocab))
     model = NERModel(pre_trained_model, tokenizer, label_vocab, device=device)
-    model.train(train_x, train_y, parameters, val=[validation_x, validation_y], outputdir=output_dir)
+    if validation_x and validation_y:
+        model.train(train_x, train_y, parameters, val=[validation_x, validation_y], outputdir=output_dir)
+    else:
+        model.train(train_x, train_y, parameters, outputdir=output_dir)
 
     return model
 

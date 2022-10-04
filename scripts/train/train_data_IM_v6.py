@@ -10,8 +10,8 @@ from util.text_utils import *
 if __name__ == '__main__':
     file = '../../data/DATA_IM_v6.txt'
     data = pd.read_csv(file, sep="	")
-    texts_tagged = data['text_tagged'].tolist()
-    texts_raw = data['text_raw'].tolist()
+    texts_tagged = data['text_tagged'].tolist()[:1000]
+    texts_raw = data['text_raw'].tolist()[:1000]
 
     tag_list = ['C']
     attr_list = ['MOD']
@@ -27,8 +27,11 @@ if __name__ == '__main__':
     train_x, test_x, train_y, test_y = train_test_split(sentences, tags, test_size=0.2)
 
     parameters = TrainingParameters()
+    parameters.set_max_epochs(10)
+    # parameters.set_learning_rate(1e-5)
+    # parameters.set_optimizer(optim.SGD)
 
-    model = train_from_sentences_tags_list(train_x, train_y, model, '../../out/out_IM_v6_negative_test',
+    model = train_from_sentences_tags_list(train_x, train_y, model, '../../out/out_IM_v6_negative_222222',
                                            device="cuda:1", parameters=parameters)
 
     evaluate(model, test_x, test_y)

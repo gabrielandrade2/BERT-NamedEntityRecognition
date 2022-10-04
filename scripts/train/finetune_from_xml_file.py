@@ -1,6 +1,5 @@
 import argparse
 
-import torch
 from sklearn.model_selection import train_test_split
 
 from BERT.Model import NERModel, TrainingParameters
@@ -23,19 +22,17 @@ if __name__ == '__main__':
     parser.add_argument('--split_sentences', action=argparse.BooleanOptionalAction, help='Should split sentences')
     parser.add_argument('--local_files_only', action=argparse.BooleanOptionalAction,
                         help='Use transformers local files')
+    parser.add_argument('--device', type=str, help='Device', required=False, default="cpu")
+    TrainingParameters.add_parser_arguments(parser)
     args = parser.parse_args()
 
     model_type = 'cl-tohoku/bert-base-japanese-char-v2'
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    model = NERModel.load_transformers_model(model_type, args.model_path, device, args.local_files_only)
+    model = NERModel.load_transformers_model(model_type, args.model_path, args.device, args.local_files_only)
 
     # Set training parameters
-    parameters = TrainingParameters()
-    # parameters.set_max_epochs(20)
-    # parameters.set_learning_rate(1e-5)
-    # parameters.set_batch_size(4)
+    parameters = TrainingParameters.from_args(args)
 
-    # Load the training dile
+    # Load the training file
     sentences, tags = convert_xml_file_to_iob_list(args.training_file, args.tags, attr_list=args.attr,
                                                    should_split_sentences=args.split_sentences)
 

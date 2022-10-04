@@ -1,6 +1,6 @@
 import json
 
-from seqeval.metrics import accuracy_score, precision_score, f1_score, classification_report
+from seqeval.metrics import accuracy_score, precision_score, f1_score, classification_report, recall_score
 from seqeval.scheme import IOB2
 
 from BERT.Model import NERModel
@@ -8,7 +8,7 @@ from util.list_utils import list_size
 from util.text_utils import exclude_long_sentences
 
 
-def evaluate(model: NERModel, test_sentences: list, test_labels: list, save_dir: str = None):
+def evaluate(model: NERModel, test_sentences: list, test_labels: list, save_dir: str = None, print_report: bool = True):
     # Convert to BERT data model
     # test_x, test_y = bert_utils.dataset_to_bert_input(test_sentences, test_labels, model.tokenizer, model.vocabulary)
 
@@ -41,15 +41,20 @@ def evaluate(model: NERModel, test_sentences: list, test_labels: list, save_dir:
     metrics = {
         'accuracy': accuracy_score(test_labels, predicted_labels),
         'precision': precision_score(test_labels, predicted_labels),
+        'recall': recall_score(test_labels, predicted_labels),
         'f1': f1_score(test_labels, predicted_labels),
         'report': classification_report(test_labels, predicted_labels, scheme=IOB2)
     }
 
-    print('Accuracy: ' + str(metrics['accuracy']))
-    print('Precision: ' + str(metrics['precision']))
-    print('F1 score: ' + str(metrics['f1']))
-    print(metrics['report'])
+    if print_report:
+        print('Accuracy: ' + str(metrics['accuracy']))
+        print('Precision: ' + str(metrics['precision']))
+        print('Recall: ' + str(metrics['recall']))
+        print('F1 score: ' + str(metrics['f1']))
+        print(metrics['report'])
 
     if save_dir is not None:
         with open(save_dir + '/metrics.txt', 'w') as f:
             json.dump(metrics, f)
+
+    return metrics
