@@ -13,12 +13,12 @@ from util.text_utils import *
 if __name__ == '__main__':
     file = 'data/DATA_IM_v6.txt'
     data = pd.read_csv(file, sep="	")
-    texts_tagged = data['text_tagged'].tolist()[:1000]
-    texts_raw = data['text_raw'].tolist()[:1000]
+    texts_tagged = data['text_tagged'].tolist()
+    texts_raw = data['text_raw'].tolist()
 
     tag_list = ['C']
     attr_list = ['MOD']
-    model = 'cl-tohoku/bert-base-japanese-char-v2'
+    model_type = 'cl-tohoku/bert-base-japanese-char-v2'
 
     # Preprocess
     texts = split_sentences(texts_tagged, True)
@@ -43,7 +43,7 @@ if __name__ == '__main__':
         train_x, val_x = [sentences[i] for i in train_index], [sentences[i] for i in test_index]
         train_y, val_y = [tags[i] for i in train_index], [tags[i] for i in test_index]
 
-        model = train_from_sentences_tags_list(train_x, train_y, val_x, val_y, model,
+        model = train_from_sentences_tags_list(train_x, train_y, val_x, val_y, model_type,
                                                cross_val_folder,
                                                parameters=parameters,
                                                local_files_only=True,

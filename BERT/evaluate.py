@@ -54,7 +54,8 @@ def evaluate(model: NERModel, test_sentences: list, test_labels: list, save_dir:
         print(metrics['report'])
 
     if save_dir is not None:
-        with open(save_dir + '/metrics.txt', 'w') as f:
+        with open(save_dir + '/test_metrics.txt', 'w') as f:
             json.dump(metrics, f)
 
+    metrics.pop('report')
     return metrics

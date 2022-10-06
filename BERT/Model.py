@@ -1,11 +1,12 @@
 import json
 import os
 
+import math
 import matplotlib.pyplot as plt
 import mojimoji
 import numpy as np
 import torch
-from seqeval.metrics import f1_score
+from seqeval.metrics import f1_score, accuracy_score
 from torch import optim
 from tqdm import tqdm
 from transformers import get_linear_schedule_with_warmup, BertJapaneseTokenizer, BertForTokenClassification
@@ -114,6 +115,11 @@ class NERModel:
             val_data = data_utils.Batch(val[0], val[1], batch_size=batch_size, max_size=max_size, sort=True)
             val_loss = []
             all_f1 = []
+            all_acc = []
+            lowest_loss = None
+            lowest_loss_epoch = None
+            highest_f1 = None
+            highest_f1_epoch = None
 
         optimizer = parameters.optimizer(model.parameters(), lr=lr)
         total_step = int((len(data) // batch_size) * max_epoch)
@@ -128,7 +134,7 @@ class NERModel:
                 step = 0
 
                 for sent, label, _ in tqdm(data, desc="batch", ncols=100,
-                                           total=int(len(data) / data.batch_size),
+                                           total=math.ceil(len(data) / data.batch_size),
                                            position=0, leave=True):
                     sent = torch.tensor(sent).to(device)
                     label = torch.tensor(label).to(device)
@@ -157,7 +163,7 @@ class NERModel:
                     pred = []
 
                     for sent, label, _ in tqdm(val_data, desc="validation", ncols=100,
-                                               total=len(val_data) / val_data.batch_size,
+                                               total=math.ceil(len(val_data) / val_data.batch_size),
                                                position=0, leave=True):
                         sent = torch.tensor(sent).to(device)
                         label = torch.tensor(label).to(device)
@@ -175,26 +181,35 @@ class NERModel:
                         step += 1
 
                     val_loss.append(all_loss / step)
+                    if lowest_loss is None or lowest_loss > val_loss[-1]:
+                        lowest_loss = val_loss[-1]
+                        lowest_loss_epoch = epoch
+                        torch.save(model.state_dict(), outputdir + '/lowest_loss.model')
+
                     # Calculate metrics
                     val_sentences = val_data.get_sentences()
                     gold = self.__remove_label_padding(val_sentences, gold)
                     pred = self.__remove_label_padding(val_sentences, pred)
                     gold = self.convert_prediction_to_labels(gold)
                     pred = self.convert_prediction_to_labels(pred)
-                    f1 = f1_score(gold, pred)
-                    all_f1.append(f1)
+                    all_f1.append(f1_score(gold, pred))
+                    all_acc.append(accuracy_score(gold, pred))
 
-                    output_path = outputdir + '/checkpoint{}.model'.format(len(val_loss) - 1)
-                    torch.save(model.state_dict(), output_path)
+                    if highest_f1 is None or highest_f1 < all_f1[-1]:
+                        highest_f1 = all_f1[-1]
+                        highest_f1_epoch = epoch
+                        torch.save(model.state_dict(), outputdir + '/highest_f1.model')
+
+                    # output_path = outputdir + '/checkpoint{}.model'.format(len(val_loss) - 1)
+                    # torch.save(model.state_dict(), output_path)
 
                 t.set_postfix(loss=losses[-1], val_loss=val_loss[-1] if val is not None else 0,
-                              val_f1=f1 if val is not None else 0)
+                              val_f1=all_f1[-1] if val is not None else 0)
 
         if val is not None:
-            best_epoch = np.argmin(val_loss)
-            # best_epoch = np.argmax(all_f1)
+            best_epoch = lowest_loss_epoch
             print('BEST EPOCH:' + str(best_epoch))
-            model_path = outputdir + '/checkpoint{}.model'.format(best_epoch)
+            model_path = outputdir + '/lowest_loss.model'
             model.load_state_dict(torch.load(model_path))
 
         x = range(max_epoch)
@@ -209,9 +224,18 @@ class NERModel:
         plt.show()
 
         torch.save(model.state_dict(), outputdir + '/final.model')
-        self.training_metrics['loss'] = losses
-        self.training_metrics['val_loss'] = val_loss
-        self.training_metrics['val_f1'] = all_f1
+        self.training_metrics['loss'] = losses[best_epoch]
+        self.training_metrics['val_loss'] = val_loss[best_epoch]
+        self.training_metrics['val_f1'] = all_f1[best_epoch]
+        self.training_metrics['val_accuracy'] = all_acc[best_epoch]
+        self.training_metrics['best_epoch'] = best_epoch
+        self.training_metrics['lowest_loss_epoch'] = lowest_loss_epoch
+        self.training_metrics['lowest_loss'] = lowest_loss
+        self.training_metrics['highest_f1_epoch'] = highest_f1_epoch
+        self.training_metrics['highest_f1'] = highest_f1
+        with open(outputdir + '/training_metrics.txt', 'w') as f:
+            json.dump(self.training_metrics, f)
+
         self.model = model
         return model
 

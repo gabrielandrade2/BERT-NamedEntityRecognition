@@ -23,4 +23,6 @@ if __name__ == '__main__':
 
     sentences, tags = convert_xml_file_to_iob_list(args.input_file, args.tags,
                                                    should_split_sentences=args.split_sentences, attr_list=args.attr)
+    # _, sentences, _, tags = train_test_split(sentences, tags, test_size=0.2, shuffle=False)
+
     evaluate(model, sentences, tags)
