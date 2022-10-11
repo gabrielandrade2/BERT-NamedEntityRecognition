@@ -21,7 +21,7 @@ def flatten_list(list):
 
 if __name__ == '__main__':
     ##### Load model #####
-    device = 'cuda:1' if torch.cuda.is_available() else 'cpu'
+    device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
     print(device)
     model = NERModel.load_transformers_model('cl-tohoku/bert-base-japanese-char-v2', '../../out/out_IM_v6_negative',
                                              device=device)
@@ -34,9 +34,6 @@ if __name__ == '__main__':
     data = pd.read_csv(file, sep="	")
     texts_tagged = data['text_tagged'].tolist()
     texts_raw = data['text_raw'].tolist()
-
-    texts_tagged = [
-        '【既往歴】ネフロ－ゼ症候群（６ヶ月）、アトピ－性皮膚炎【個人歴】特記事項なし【入院時所見】咽頭発赤、表在リンパ節腫脹・圧痛あり、腸蠕動音亢進、腹部全体に圧痛あり、肝腫大あり、ＷＢＣ４４']
 
     # Preprocess
     texts_split = split_sentences(texts_tagged, True)

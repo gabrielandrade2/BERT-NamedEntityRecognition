@@ -7,6 +7,7 @@ from tqdm import tqdm
 from BERT.Model import TrainingParameters
 from BERT.evaluate import evaluate
 from BERT.train import train_from_sentences_tags_list
+from scripts.crossvalidation.utils import crossvalidation_utils
 from util.iob_util import convert_xml_text_list_to_iob_list
 from util.text_utils import *
 
@@ -54,3 +55,7 @@ if __name__ == '__main__':
         test_metrics.append(evaluate(model, test_x, test_y, save_dir=cross_val_folder, print_report=False))
 
         cross_val_step += 1
+
+    # Print the metrics
+    crossvalidation_utils.average_training_metrics(train_metrics, save_dir='out/IM_v6_crossval')
+    crossvalidation_utils.average_test_metrics(test_metrics, save_dir='out/IM_v6_crossval')

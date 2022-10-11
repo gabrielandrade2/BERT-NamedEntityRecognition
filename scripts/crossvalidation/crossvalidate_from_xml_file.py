@@ -8,7 +8,7 @@ from tqdm import tqdm
 from BERT.Model import TrainingParameters, NERModel
 from BERT.evaluate import evaluate
 from BERT.train import train_from_sentences_tags_list, finetune_from_sentences_tags_list
-from util.list_utils import dict_mean
+from scripts.crossvalidation.utils import crossvalidation_utils
 from util.xml_parser import convert_xml_file_to_iob_list
 
 if __name__ == '__main__':
@@ -68,13 +68,7 @@ if __name__ == '__main__':
                                                    parameters=parameters,
                                                    local_files_only=args.local_files_only,
                                                    device=args.device)
-        training_metrics = model.get_training_metrics()
-        training_metrics.pop('best_epoch')
-        training_metrics.pop('lowest_loss')
-        training_metrics.pop('lowest_loss_epoch')
-        training_metrics.pop('highest_f1')
-        training_metrics.pop('highest_f1_epoch')
-        train_metrics.append(training_metrics)
+        train_metrics.append(model.get_training_metrics())
 
         # Evaluate the model
         test_metrics.append(evaluate(model, test_x, test_y, save_dir=cross_val_folder, print_report=False))
@@ -82,10 +76,5 @@ if __name__ == '__main__':
         cross_val_step += 1
 
     # Print the metrics
-    print("Training metrics:")
-    print(dict_mean(train_metrics))
-
-    print("Test metrics:")
-    print(dict_mean(test_metrics))
-    f1 = [d['f1'] for d in test_metrics]
-    print('Best Test F1 model: {}'.format(f1.index(max(f1))))
+    crossvalidation_utils.average_training_metrics(train_metrics, args.output)
+    crossvalidation_utils.average_test_metrics(test_metrics, args.output)
