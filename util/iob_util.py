@@ -375,7 +375,9 @@ def is_chunk_end(tag, post_tag):
 
     if prefix1 == 'O':
         return False
-    if prefix2 == 'O':
+    elif prefix2 == 'B':
+        return True
+    elif prefix2 == 'O':
         return prefix1 != 'O'
 
     return chunk_type1 != chunk_type2
@@ -385,10 +387,12 @@ def is_chunk_start(prev_tag, tag):
     prefix1, chunk_type1 = split_tag(prev_tag)
     prefix2, chunk_type2 = split_tag(tag)
 
+    if prefix2 == 'B':
+        return True
     if prefix2 == 'O':
         return False
-    if prefix1 == 'O':
-        return prefix2 != 'O'
+    if prefix1 == 'O' and prefix2 == 'I':
+        return True
 
     return chunk_type1 != chunk_type2
 
