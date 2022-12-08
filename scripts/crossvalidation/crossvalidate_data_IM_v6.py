@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 from BERT.Model import TrainingParameters
 from BERT.evaluate import evaluate
-from BERT.train import train_from_sentences_tags_list
+from BERT.train import train_from_sentences_tags_list_val
 from scripts.crossvalidation.utils import crossvalidation_utils
 from util.iob_util import convert_xml_text_list_to_iob_list
 from util.text_utils import *
@@ -44,11 +44,11 @@ if __name__ == '__main__':
         train_x, val_x = [sentences[i] for i in train_index], [sentences[i] for i in test_index]
         train_y, val_y = [tags[i] for i in train_index], [tags[i] for i in test_index]
 
-        model = train_from_sentences_tags_list(train_x, train_y, val_x, val_y, model_type,
-                                               cross_val_folder,
-                                               parameters=parameters,
-                                               local_files_only=True,
-                                               device="cuda:1")
+        model = train_from_sentences_tags_list_val(train_x, train_y, val_x, val_y, model_type,
+                                                   cross_val_folder,
+                                                   parameters=parameters,
+                                                   local_files_only=True,
+                                                   device="cuda:1")
         train_metrics.append(model.get_training_metrics())
 
         # Evaluate the model

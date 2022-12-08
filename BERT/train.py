@@ -36,17 +36,17 @@ def train_from_sentences_tags_list(sentences, tags, model_name, output_dir, para
                                           parameters, local_files_only, device)
 
 
-def train_from_sentences_tags_list(train_x, train_y, validation_x, validation_y, model_name, output_dir,
-                                   parameters=None, local_files_only=False,
-                                   device=None):
+def train_from_sentences_tags_list_val(train_x, train_y, validation_x, validation_y, model_name, output_dir,
+                                       parameters=None, local_files_only=False,
+                                       device=None):
     os.makedirs(output_dir, exist_ok=True)
 
     train_x, train_y = exclude_long_sentences(512, train_x, train_y)
     validation_x, validation_y = exclude_long_sentences(512, validation_x, validation_y)
 
     if not device:
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        # device = 'cuda' if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
+        # device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        device = 'cuda' if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
 
     print('device: ' + device)
 
@@ -101,8 +101,9 @@ def finetune_from_sentences_tags_list(sentences, tags, model: NERModel, output_d
                                              parameters)
 
 
-def finetune_from_sentences_tags_list(train_x, train_y, validation_x, validation_y, model: NERModel, output_dir=None,
-                                      parameters=None):
+def finetune_from_sentences_tags_list_val(train_x, train_y, validation_x, validation_y, model: NERModel,
+                                          output_dir=None,
+                                          parameters=None):
     train_x, train_y = exclude_long_sentences(512, train_x, train_y)
     validation_x, validation_y = exclude_long_sentences(512, validation_x, validation_y)
 

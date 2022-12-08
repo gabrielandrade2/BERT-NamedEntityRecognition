@@ -1,7 +1,7 @@
 import json
+import math
 import os
 
-import math
 import matplotlib.pyplot as plt
 import mojimoji
 import numpy as np
@@ -86,6 +86,7 @@ class NERModel:
                                                            local_files_only=local_files_only)
         model_path = model_dir + '/final.model'
         model.load_state_dict(torch.load(model_path, map_location=device))
+        print('device: ', device)
 
         return cls(model, tokenizer, label_vocab, device)
 
