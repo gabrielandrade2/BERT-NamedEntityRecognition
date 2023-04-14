@@ -22,6 +22,7 @@ if __name__ == '__main__':
                         help='Use transformers local files')
     parser.add_argument('--split_sentences', action=argparse.BooleanOptionalAction, help='Should split sentences')
     parser.add_argument('--device', type=str, help='Device', required=False, default="cpu")
+    TrainingParameters.add_parser_arguments(parser)
     args = parser.parse_args()
 
     model_type = 'cl-tohoku/bert-base-japanese-char-v2'
@@ -40,7 +41,7 @@ if __name__ == '__main__':
         train_y = tags
 
     # Set training parameters
-    parameters = TrainingParameters()
+    parameters = TrainingParameters.from_args(args)
     # parameters.set_learning_rate(5e-5)
     # parameters.set_batch_size(4)
 

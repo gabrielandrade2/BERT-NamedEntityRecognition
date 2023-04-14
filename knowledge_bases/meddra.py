@@ -2,7 +2,7 @@ import sqlite3
 from sqlite3 import Error
 
 import pandas as pd
-from thefuzz import fuzz
+from rapidfuzz import fuzz, process
 
 from util.text_utils import EntityNormalizer
 
@@ -214,7 +214,7 @@ class MedDRAEntityNormalizer(EntityNormalizer):
 
 class MedDRAPatientFriendlyPTEntityNormalizer(EntityNormalizer):
 
-    def __init__(self, database: MedDRADatabase, patient_friendly_list, matching_method=fuzz.token_set_ratio,
+    def __init__(self, database: MedDRADatabase, patient_friendly_list, matching_method=fuzz.ratio,
                  threshold=0):
         self.database = database
         self.patient_friendly_list = patient_friendly_list
@@ -223,9 +223,9 @@ class MedDRAPatientFriendlyPTEntityNormalizer(EntityNormalizer):
         self.threshold = threshold
 
     def normalize(self, term):
-        preferred_candidate = max([(self.matching_method(term, pf[0]), pf) for pf in self.pf_list])
-        patient_friendly_term = preferred_candidate[1]
-        score = preferred_candidate[0]
+        preferred_candidate = process.extractOne(term, self.candidates, scorer=self.matching_method)
+        patient_friendly_term = preferred_candidate[0]
+        score = preferred_candidate[1]
 
         if score > self.threshold:
             if patient_friendly_term[2] == 'pt':

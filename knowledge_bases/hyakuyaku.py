@@ -1,6 +1,6 @@
 import mojimoji
 import pandas as pd
-from thefuzz import fuzz
+from rapidfuzz import fuzz, process
 
 from util import text_utils
 from util.text_utils import EntityNormalizer, DrugNameMatcher
@@ -13,13 +13,16 @@ class TranslationNotFound(BaseException):
 class HyakuyakuList:
 
     def __init__(self, path='data/HYAKUYAKU_FULL_v20210706.xlsx'):
-        self.df = pd.read_excel(path)
+        self.df = pd.read_csv(path)
 
     def get_surface_forms(self):
         return set(self.df['出現形'].dropna())
 
     def get_general_names(self):
         return set(self.df['一般名'].dropna())
+
+    def get_general_name(self, term):
+        return self.df[self.df['出現形'] == term]['一般名'].values[0]
 
     def get_english_translation(self, term):
         idx = None
@@ -46,25 +49,24 @@ class HyakuyakuList:
 
 class HyakuyakuNormalizer(EntityNormalizer):
 
-    def __init__(self, hyakuyaku_list):
+    def __init__(self, hyakuyaku_list, matching_method=fuzz.ratio, matching_threshold=0):
         self.list = hyakuyaku_list
-        self.forms = {
-            '出現形': self.list.get_surface_forms,
-            '一般名': self.list.get_general_names
-        }
+        self.candidates = {mojimoji.han_to_zen(x) for x in self.list.get_surface_forms()}
+        self.matching_method = matching_method
+        self.matching_threshold = matching_threshold
 
-    def normalize(self, term, matching_method=fuzz.token_set_ratio, threshold=0, form='出現形'):
-        candidates = self.forms[form]()
-        preferred_candidate = max([(matching_method(term, candidate), candidate) for candidate in candidates])
-        score = preferred_candidate[0]
+    def normalize(self, term):
+        term = mojimoji.han_to_zen(term)
+        preferred_candidate = process.extractOne(term, self.candidates, scorer=self.matching_method)
+        score = preferred_candidate[1]
 
-        if score > threshold:
-            normalized_term = preferred_candidate[1]
+        if score > self.matching_threshold:
+            ret = self.list.get_general_name(preferred_candidate[0])
+            if pd.isna(ret):
+                return '', score
+            return ret, score
         else:
-            normalized_term = term
-
-        return normalized_term, score
-
+            return '', score
 
 class HyakuyakuDrugMatcher(DrugNameMatcher):
 

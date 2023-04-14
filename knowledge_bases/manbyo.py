@@ -1,5 +1,6 @@
+import mojimoji
 import pandas as pd
-from thefuzz import fuzz
+from rapidfuzz import fuzz, process
 
 from util.text_utils import EntityNormalizer
 
@@ -34,6 +35,12 @@ class ManbyoDict:
     def getTermByEnglishName(self, term):
         return self.df[self.df['出現形英語（DeepL翻訳）'] == term].to_dict("records")
 
+    def getTermICDCode(self, term):
+        return self.df[self.df['出現形'] == term]['ICDコード'].item()
+
+    def getTermMedDRA(self, term):
+        return self.df[self.df['出現形'] == term]['MedDRA/J (Ver.22): PT/LLT'].item()
+
     def searchTerm(self, search, num_candidates=1, return_scores=False):
         temp = [(i, fuzz.token_set_ratio(i, search)) for i in self.getTermList()]
         temp = sorted(temp, key=lambda x: x[1], reverse=True)[:num_candidates]
@@ -42,30 +49,37 @@ class ManbyoDict:
         return temp
 
 
-def wrapper(method, pf, term):
-    return (method(term, pf), pf)
-
-
 class ManbyoNormalizer(EntityNormalizer):
 
-    def __init__(self, database: ManbyoDict, matching_method=fuzz.token_set_ratio, threshold=0):
-        self.database = database.getTermList()
+    def __init__(self, database: ManbyoDict, matching_method=fuzz.ratio, matching_threshold=0):
+        self.database = database
         self.matching_method = matching_method
-        self.threshold = threshold
+        self.matching_threshold = matching_threshold
+        self.candidates = {mojimoji.han_to_zen(x) for x in self.database.getTermList()}
+
+    def convert_term(self, term):
+        return term
 
     def normalize(self, term):
-        temp = []
-        for pf in self.database:
-            score = self.matching_method(term, pf)
-            temp.append((score, pf))
-            if score == 100:
-                break
+        term = mojimoji.han_to_zen(term)
+        preferred_candidate = process.extractOne(term, self.candidates, scorer=self.matching_method)
+        score = preferred_candidate[1]
 
-        preferred_candidate = max(temp)
-
-        score = preferred_candidate[0]
-
-        if score > self.threshold:
-            return preferred_candidate[1]
+        if score > self.matching_threshold:
+            return self.convert_term(preferred_candidate[0]), score
         else:
-            return ''
+            return '', score
+
+
+class ManbyoICDNormalizer(ManbyoNormalizer):
+
+    def convert_term(self, term):
+        ret = self.database.getTermICDCode(term)
+        return 'NO_ICD_' + term if pd.isna(ret) else ret
+
+
+class ManbyoMedDRANormalizer(ManbyoNormalizer):
+
+    def convert_term(self, term):
+        ret = self.database.getTermMedDRA(term)
+        return 'NO_MEDDRA_MATCH' if pd.isna(ret) else ret

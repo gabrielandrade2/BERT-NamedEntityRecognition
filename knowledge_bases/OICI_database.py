@@ -1,5 +1,6 @@
+import mojimoji
 import pandas as pd
-from thefuzz import fuzz
+from rapidfuzz import fuzz, process
 
 from util.text_utils import EntityNormalizer
 
@@ -12,10 +13,11 @@ class OICIDatabase:
 
 class OICINormalizer(EntityNormalizer):
 
-    def __init__(self, database: OICIDatabase, matching_method=fuzz.token_set_ratio, threshold=60):
+    def __init__(self, database: OICIDatabase, matching_method=fuzz.ratio, threshold=60):
         self.database = database.df
         self.matching_method = matching_method
         self.threshold = threshold
+        self.candidates = {mojimoji.han_to_zen(x) for x in self.database['word']}
 
     def normalize(self, term):
         temp = []
@@ -29,18 +31,11 @@ class OICINormalizer(EntityNormalizer):
                 return term
             return ''
 
-        for pf in self.database['word']:
-            pf = str(pf)
-            score = self.matching_method(term, pf)
-            temp.append((score, pf))
-            if score == 100:
-                break
+        preferred_candidate = process.extractOne(term, self.candidates, scorer=self.matching_method)
 
-        preferred_candidate = max(temp)
-
-        score = preferred_candidate[0]
+        score = preferred_candidate[1]
 
         if score > self.threshold:
-            return self.normalize(preferred_candidate[1])
+            return self.normalize(preferred_candidate[0])
         else:
             return ''
