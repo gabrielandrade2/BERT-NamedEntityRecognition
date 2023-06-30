@@ -1,3 +1,5 @@
+import os
+
 import lxml.etree as etree
 import pandas as pd
 from lxml.etree import XMLSyntaxError, XMLParser
@@ -13,6 +15,10 @@ class Article:
         self.text = text
         self.headers = headers
 
+    def get_headers_as_str(self):
+        if self.headers is None:
+            return ''
+        return ' '.join([f'{key}="{value}"' for key, value in self.headers.items()])
 
 class ArticleReader:
 
@@ -232,6 +238,28 @@ def drop_texts_with_mismatched_tags(texts):
         except XMLSyntaxError:
             continue
     return no_mismatch
+
+
+def articles_to_xml(articles: list[Article], file_path: os.path):
+    """
+    Write a list of articles to an xml file.
+
+    :param articles: The list of articles to be written.
+    :param file_path: The path of the file to be written.
+    """
+
+    with open(file_path, 'w', encoding='utf-8') as f:
+        f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+        f.write('<articles>\n')
+        for article in articles:
+            headers = article.get_headers_as_str()
+            if (len(headers) > 0):
+                f.write('<article {}>\n'.format(headers))
+            else:
+                f.write('<article>\n')
+            f.write(article.text)
+            f.write('\n</article>\n')
+        f.write('</articles>')
 
 # def entities_from_xml(file_name, attrs = False):#attrs=属性を考慮するか否か，考慮しないならFalse
 #     frequent_tags_attrs = select_tags(attrs)

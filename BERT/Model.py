@@ -6,7 +6,8 @@ import matplotlib.pyplot as plt
 import mojimoji
 import numpy as np
 import torch
-from seqeval.metrics import f1_score, accuracy_score
+import wandb
+from seqeval.metrics import f1_score, accuracy_score, precision_score
 from torch import optim
 from tqdm import tqdm
 from transformers import get_linear_schedule_with_warmup, BertJapaneseTokenizer, BertForTokenClassification
@@ -111,12 +112,26 @@ class NERModel:
 
         os.makedirs(outputdir, exist_ok=True)
 
+        wandb.init(
+            # set the wandb project where this run will be logged
+            project="BERT-NER",
+
+            # track hyperparameters and run metadata
+            config={
+                "learning_rate": lr,
+                "epochs": max_epoch,
+                "batch_size": batch_size,
+                "optimizer": parameters.optimizer.__name__,
+            }
+        )
+
         data = data_utils.Batch(x, y, batch_size=batch_size, max_size=max_size, sort=True)
         if val is not None:
             val_data = data_utils.Batch(val[0], val[1], batch_size=batch_size, max_size=max_size, sort=True)
             val_loss = []
             all_f1 = []
             all_acc = []
+            all_prec = []
             lowest_loss = None
             lowest_loss_epoch = None
             highest_f1 = None
@@ -193,8 +208,14 @@ class NERModel:
                     pred = self.__remove_label_padding(val_sentences, pred)
                     gold = self.convert_prediction_to_labels(gold)
                     pred = self.convert_prediction_to_labels(pred)
-                    all_f1.append(f1_score(gold, pred))
-                    all_acc.append(accuracy_score(gold, pred))
+                    f1 = f1_score(gold, pred)
+                    acc = accuracy_score(gold, pred)
+                    prec = precision_score(gold, pred)
+                    all_f1.append(f1)
+                    all_acc.append(acc)
+                    all_prec.append(prec)
+
+                    wandb.log({"acc": acc, "loss": all_loss / step, "f1": f1, "prec": prec})
 
                     if highest_f1 is None or highest_f1 < all_f1[-1]:
                         highest_f1 = all_f1[-1]
@@ -229,15 +250,19 @@ class NERModel:
         self.training_metrics['val_loss'] = val_loss[best_epoch]
         self.training_metrics['val_f1'] = all_f1[best_epoch]
         self.training_metrics['val_accuracy'] = all_acc[best_epoch]
+        self.training_metrics['val_precision'] = all_prec[best_epoch]
         self.training_metrics['best_epoch'] = best_epoch
         self.training_metrics['lowest_loss_epoch'] = lowest_loss_epoch
         self.training_metrics['lowest_loss'] = lowest_loss
         self.training_metrics['highest_f1_epoch'] = highest_f1_epoch
         self.training_metrics['highest_f1'] = highest_f1
+
         with open(outputdir + '/training_metrics.txt', 'w') as f:
             json.dump(self.training_metrics, f)
 
         self.model = model
+
+        wandb.finish()
         return model
 
     def predict(self, x, return_labels=True, display_progress=False):

@@ -9,7 +9,7 @@ from BERT.predict import predict_from_sentences_list
 from util import iob_util
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Predict OICI data')
+    parser = argparse.ArgumentParser(description='Predict for txt/xml file')
     parser.add_argument('--model', type=str, help='Model path', required=True)
     parser.add_argument('--input', type=str, nargs="+", help='Input files', required=True)
     parser.add_argument('--output', type=str, help='Output file', required=True)

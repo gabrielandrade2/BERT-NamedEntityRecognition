@@ -19,7 +19,7 @@ def from_lists(drugs: list, entities: list, remove_duplicates=False, normalizati
     # if normalization_model:
     #     entities = [normalization_model.normalize_list(entity_list)[0] for entity_list in tqdm(entities, desc='Entity normalization')]
 
-    for drug_list, entity_list in tqdm(zip(drugs, entities), desc='text'):
+    for drug_list, entity_list in tqdm(zip(drugs, entities), desc='Generating ADE table', total=len(drugs)):
 
         # Remove duplicates in the same document
         if remove_duplicates:

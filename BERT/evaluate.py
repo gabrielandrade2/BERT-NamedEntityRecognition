@@ -1,4 +1,5 @@
 import json
+import os
 
 from seqeval.metrics import accuracy_score, precision_score, f1_score, classification_report, recall_score
 from seqeval.scheme import IOB2
@@ -8,25 +9,27 @@ from util.list_utils import list_size
 from util.text_utils import exclude_long_sentences
 
 
-def evaluate(model: NERModel, test_sentences: list, test_labels: list, save_dir: str = None, print_report: bool = True):
+def evaluate(model: NERModel, test_sentences: list, test_labels: list, save_dir: str = None, print_report: bool = True,
+             save_output_file: bool = False):
     # Convert to BERT data model
     # test_x, test_y = bert_utils.dataset_to_bert_input(test_sentences, test_labels, model.tokenizer, model.vocabulary)
 
     test_sentences, test_labels = exclude_long_sentences(512, test_sentences, test_labels)
 
     # Predict outputs
-    data_x = model.prepare_sentences(test_sentences)
-    predicted_labels = model.predict(data_x, display_progress=True)
-    data_x = model.convert_ids_to_tokens(data_x)
+    sentences = model.prepare_sentences(test_sentences)
+    predicted_labels = model.predict(sentences, display_progress=True)
+    sentences = model.convert_ids_to_tokens(sentences)
+    labels = [[l if l != "[PAD]" else "O" for l in label] for label in predicted_labels]
 
     # Normalize to same tokenization as BERT
     test_sentences, test_labels = model.normalize_tagged_dataset(test_sentences, test_labels)
 
     # Evaluate model
-    if not (list_size(test_sentences) == list_size(data_x) == list_size(test_labels) == list_size(predicted_labels)):
+    if not (list_size(test_sentences) == list_size(sentences) == list_size(test_labels) == list_size(predicted_labels)):
         tmp_gl = []
         tmp_tl = []
-        for gs, gl, ts, tl in zip(test_sentences, test_labels, data_x, predicted_labels):
+        for gs, gl, ts, tl in zip(test_sentences, test_labels, sentences, predicted_labels):
             if len(gs) == len(gl) == len(ts) == len(tl):
                 tmp_gl.append(gl)
                 tmp_tl.append(tl)
@@ -54,8 +57,17 @@ def evaluate(model: NERModel, test_sentences: list, test_labels: list, save_dir:
         print(metrics['report'])
 
     if save_dir is not None:
+        os.makedirs(save_dir, exist_ok=True)
         with open(save_dir + '/test_metrics.txt', 'w') as f:
             json.dump(metrics, f, indent=4)
+
+        if save_output_file:
+            tagged_sentences = list()
+            for sent, label in zip(sentences, labels):
+                tagged_sentences.append(iob_util.convert_iob_to_xml(sent, label))
+
+            with open(save_dir + '/output_file.txt', 'w') as f:
+                f.write("\n".join(tagged_sentences))
 
     metrics.pop('report')
     return metrics

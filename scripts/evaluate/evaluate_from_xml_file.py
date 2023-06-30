@@ -15,6 +15,9 @@ if __name__ == '__main__':
     parser.add_argument('--split_sentences', action=argparse.BooleanOptionalAction, help='Should split sentences')
     parser.add_argument('--local_files_only', action=argparse.BooleanOptionalAction,
                         help='Use transformers local files')
+    parser.add_argument('--save_dir', type=str, help='Path of the folder to save the metrics', default=None)
+    parser.add_argument('--save_output_file', action=argparse.BooleanOptionalAction,
+                        help='Should save the produced output file? (Must have provided a save folder')
     args = parser.parse_args()
 
     model_type = 'cl-tohoku/bert-base-japanese-char-v2'
@@ -23,6 +26,5 @@ if __name__ == '__main__':
 
     sentences, tags = convert_xml_file_to_iob_list(args.input_file, args.tags,
                                                    should_split_sentences=args.split_sentences, attr_list=args.attr)
-    # _, sentences, _, tags = train_test_split(sentences, tags, test_size=0.2, shuffle=False)
 
-    evaluate(model, sentences, tags)
+    evaluate(model, sentences, tags, save_dir=args.save_dir, save_output_file=args.save_output_file)

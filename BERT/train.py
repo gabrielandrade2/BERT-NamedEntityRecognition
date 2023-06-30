@@ -32,8 +32,8 @@ def train_from_sentences_tags_list(sentences, tags, model_name, output_dir, para
                                    device=None, validation_ratio=0.1):
     ##### Split in train/validation #####
     train_x, validation_x, train_y, validation_y = train_test_split(sentences, tags, test_size=validation_ratio)
-    return train_from_sentences_tags_list(train_x, train_y, validation_x, validation_y, model_name, output_dir,
-                                          parameters, local_files_only, device)
+    return train_from_sentences_tags_list_val(train_x, train_y, validation_x, validation_y, model_name, output_dir,
+                                              parameters, local_files_only, device)
 
 
 def train_from_sentences_tags_list_val(train_x, train_y, validation_x, validation_y, model_name, output_dir,
