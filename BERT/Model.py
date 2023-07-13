@@ -7,7 +7,7 @@ import mojimoji
 import numpy as np
 import torch
 import wandb
-from seqeval.metrics import f1_score, accuracy_score, precision_score
+from seqeval.metrics import f1_score, accuracy_score, precision_score, recall_score
 from torch import optim
 from tqdm import tqdm
 from transformers import get_linear_schedule_with_warmup, BertJapaneseTokenizer, BertForTokenClassification
@@ -113,18 +113,24 @@ class NERModel:
 
         os.makedirs(outputdir, exist_ok=True)
 
-        wandb.init(
-            # set the wandb project where this run will be logged
-            project="BERT-NER",
+        try:
+            use_wandb = bool(os.environ.get('USE_WANDB', False))
+        except Exception as _:
+            use_wandb = False
 
-            # track hyperparameters and run metadata
-            config={
-                "learning_rate": lr,
-                "epochs": max_epoch,
-                "batch_size": batch_size,
-                "optimizer": parameters.optimizer.__name__,
-            }
-        )
+        if use_wandb:
+            wandb.init(
+                # set the wandb project where this run will be logged
+                project="BERT-NER",
+
+                # track hyperparameters and run metadata
+                config={
+                    "learning_rate": lr,
+                    "epochs": max_epoch,
+                    "batch_size": batch_size,
+                    "optimizer": parameters.optimizer.__name__,
+                }
+            )
 
         data = data_utils.Batch(x, y, batch_size=batch_size, max_size=max_size, sort=True)
         if val is not None:
@@ -133,9 +139,10 @@ class NERModel:
             all_f1 = []
             all_acc = []
             all_prec = []
+            all_rec = []
             rel_f1 = []
-            rel_acc = []
             rel_prec = []
+            rel_rec = []
             lowest_loss = None
             lowest_loss_epoch = None
             highest_f1 = None
@@ -215,20 +222,23 @@ class NERModel:
                     f1 = f1_score(gold, pred)
                     acc = accuracy_score(gold, pred)
                     prec = precision_score(gold, pred)
+                    rec = recall_score(gold, pred)
                     all_f1.append(f1)
                     all_acc.append(acc)
                     all_prec.append(prec)
+                    all_rec.append(rec)
 
                     relaxed_results = calculate_relaxed_metric(gold, pred)
 
                     rel_f1.append(relaxed_results["overall"]["f1"])
                     rel_prec.append(relaxed_results["overall"]["precision"])
-                    rel_acc.append(relaxed_results["overall"]["recall"])
+                    rel_rec.append(relaxed_results["overall"]["recall"])
 
-                    wandb.log({"acc": acc, "loss": all_loss / step, "f1": f1, "prec": prec,
-                               "relaxed_acc": relaxed_results["overall"]["recall"],
-                               "relaxed_f1": relaxed_results["overall"]["f1"],
-                               "relaxed_prec": relaxed_results["overall"]["precision"]})
+                    if use_wandb:
+                        wandb.log({"acc": acc, "loss": all_loss / step, "f1": f1, "prec": prec, "recall": rec,
+                                   "relaxed_f1": relaxed_results["overall"]["f1"],
+                                   "relaxed_prec": relaxed_results["overall"]["precision"],
+                                   "relaxed_recall": relaxed_results["overall"]["recall"]})
 
                     if highest_f1 is None or highest_f1 < all_f1[-1]:
                         highest_f1 = all_f1[-1]
@@ -264,6 +274,7 @@ class NERModel:
         self.training_metrics['val_f1'] = all_f1[best_epoch]
         self.training_metrics['val_accuracy'] = all_acc[best_epoch]
         self.training_metrics['val_precision'] = all_prec[best_epoch]
+        self.training_metrics['val_recall'] = all_rec[best_epoch]
         self.training_metrics['best_epoch'] = best_epoch
         self.training_metrics['lowest_loss_epoch'] = lowest_loss_epoch
         self.training_metrics['lowest_loss'] = lowest_loss
@@ -271,7 +282,7 @@ class NERModel:
         self.training_metrics['highest_f1'] = highest_f1
         self.training_metrics["overall_f1_relaxed"] = rel_f1[best_epoch]
         self.training_metrics["overall_precision_relaxed"] = rel_prec[best_epoch]
-        self.training_metrics["overall_recall_relaxed"] = rel_acc[best_epoch]
+        self.training_metrics["overall_recall_relaxed"] = rel_rec[best_epoch]
 
         with open(outputdir + '/training_metrics.txt', 'w') as f:
             json.dump(self.training_metrics, f)
