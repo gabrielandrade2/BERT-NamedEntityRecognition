@@ -1,14 +1,21 @@
 import argparse
-from itertools import repeat
+import itertools
+
+from tqdm import tqdm
 
 import ade_table
-from knowledge_bases.hyakuyaku import HyakuyakuList
-from knowledge_bases.meddra import MedDRADatabase, MedDRAPatientFriendlyPTEntityNormalizer, MedDRAPatientFriendlyList
+from knowledge_bases.manbyo import ManbyoNormalizer, ManbyoDict
 from util import xml_parser, iob_util
 
 
 def wrapper(drug_list, hyakuyaku):
     return [hyakuyaku.append_english_name(drug) for drug in drug_list]
+
+
+def wrapper_symptoms(data):
+    normalizer = data[0]
+    l = data[1]
+    return [normalizer.normalize(t) for t in l]
 
 
 if __name__ == '__main__':
@@ -19,7 +26,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     file = args.input_file
-    articles = xml_parser.xml_to_articles(file, return_iterator=True)
+    articles = xml_parser.xml_to_article_texts(file, return_iterator=True)
     symptoms = list()
     drugs = list()
 
@@ -27,7 +34,7 @@ if __name__ == '__main__':
     # articles = text_utils.split_sentences(articles, True)
 
     i = 0
-    for article in articles:
+    for article in tqdm(articles, desc='Parse XML'):
         i += 1
         try:
             symptoms.append([item[3] for item in iob_util.convert_xml_to_taglist(article, 'C')[1]])
@@ -38,21 +45,26 @@ if __name__ == '__main__':
             print(e)
 
     if args.normalize:
-        database = MedDRADatabase('/Users/gabriel-he/Documents/git/meddra-sqlite/db/meddra.sqlite3')
-        database.open_connection()
-        normalization_model = MedDRAPatientFriendlyPTEntityNormalizer(
-            database,
-            MedDRAPatientFriendlyList('/Users/gabriel-he/Documents/MedDRA/patient-friendly_term_list_v24.1_J.xlsx')
-        )
+
+        normalization_model = ManbyoNormalizer(ManbyoDict(), threshold=70)
 
         # Add drug english names
-        hyakuyaku = HyakuyakuList()
+        # hyakuyaku = HyakuyakuList()
+        #
+        # from multiprocessing import Pool
+        #
+        # pool = Pool()
+        # drugs = pool.starmap(wrapper, zip(drugs, repeat(hyakuyaku)))
+        # # drugs = [[hyakuyaku.append_english_name(drug) for drug in drug_list] for drug_list in tqdm(drugs)]
 
         from multiprocessing import Pool
 
-        pool = Pool()
-        drugs = pool.starmap(wrapper, zip(drugs, repeat(hyakuyaku)))
-        # drugs = [[hyakuyaku.append_english_name(drug) for drug in drug_list] for drug_list in tqdm(drugs)]
+        with Pool() as pool:
+            normalized_symptoms = list(
+                tqdm(pool.imap(wrapper_symptoms, zip(itertools.repeat(normalization_model), symptoms)),
+                     total=len(symptoms)))
+            pool.close()
+            pool.join()
 
         table = ade_table.from_lists(drugs, symptoms, normalization_model)
 
@@ -60,8 +72,9 @@ if __name__ == '__main__':
         table = ade_table.from_lists(drugs, symptoms)
 
     output_path = args.input_file.replace('.xml', '.xlsx')
-    # table.to_excel(output_path)
-    table.to_dataframe().to_csv(output_path)
+    output_path = args.input_file.replace('.txt', '.xlsx')
+    table.to_excel(output_path)
+    # table.to_dataframe().to_csv(output_path)
 
     if args.generate_heatmap:
         table.generate_heatmap(output_path=output_path.replace('.xlsx', '.png'))
