@@ -14,6 +14,7 @@ from transformers import get_linear_schedule_with_warmup, BertJapaneseTokenizer,
 
 from BERT import data_utils
 from util import text_utils
+from util.relaxed_metrics import calculate_relaxed_metric
 
 CLS_TAG = '[CLS]'
 PAD_TAG = '[PAD]'
@@ -132,6 +133,9 @@ class NERModel:
             all_f1 = []
             all_acc = []
             all_prec = []
+            rel_f1 = []
+            rel_acc = []
+            rel_prec = []
             lowest_loss = None
             lowest_loss_epoch = None
             highest_f1 = None
@@ -215,7 +219,16 @@ class NERModel:
                     all_acc.append(acc)
                     all_prec.append(prec)
 
-                    wandb.log({"acc": acc, "loss": all_loss / step, "f1": f1, "prec": prec})
+                    relaxed_results = calculate_relaxed_metric(gold, pred)
+
+                    rel_f1.append(relaxed_results["overall"]["f1"])
+                    rel_prec.append(relaxed_results["overall"]["precision"])
+                    rel_acc.append(relaxed_results["overall"]["recall"])
+
+                    wandb.log({"acc": acc, "loss": all_loss / step, "f1": f1, "prec": prec,
+                               "relaxed_acc": relaxed_results["overall"]["recall"],
+                               "relaxed_f1": relaxed_results["overall"]["f1"],
+                               "relaxed_prec": relaxed_results["overall"]["precision"]})
 
                     if highest_f1 is None or highest_f1 < all_f1[-1]:
                         highest_f1 = all_f1[-1]
@@ -256,6 +269,9 @@ class NERModel:
         self.training_metrics['lowest_loss'] = lowest_loss
         self.training_metrics['highest_f1_epoch'] = highest_f1_epoch
         self.training_metrics['highest_f1'] = highest_f1
+        self.training_metrics["overall_f1_relaxed"] = rel_f1[best_epoch]
+        self.training_metrics["overall_precision_relaxed"] = rel_prec[best_epoch]
+        self.training_metrics["overall_recall_relaxed"] = rel_acc[best_epoch]
 
         with open(outputdir + '/training_metrics.txt', 'w') as f:
             json.dump(self.training_metrics, f)

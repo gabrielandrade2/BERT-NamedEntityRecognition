@@ -8,7 +8,9 @@ from tqdm import tqdm
 
 from BERT.Model import NERModel
 from BERT.predict import *
+from knowledge_bases.hyakuyaku import HyakuyakuList, HyakuyakuDrugMatcher
 from util import iob_util
+from util.text_utils import tag_matches
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Predict OICI data')

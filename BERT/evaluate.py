@@ -5,7 +5,9 @@ from seqeval.metrics import accuracy_score, precision_score, f1_score, classific
 from seqeval.scheme import IOB2
 
 from BERT.Model import NERModel
+from util import iob_util
 from util.list_utils import list_size
+from util.relaxed_metrics import calculate_relaxed_metric
 from util.text_utils import exclude_long_sentences
 
 
@@ -49,11 +51,20 @@ def evaluate(model: NERModel, test_sentences: list, test_labels: list, save_dir:
         'report': classification_report(test_labels, predicted_labels, scheme=IOB2)
     }
 
+    relaxed_results = calculate_relaxed_metric(test_labels, predicted_labels)
+
+    metrics["overall_f1_relaxed"] = relaxed_results["overall"]["f1"]
+    metrics["overall_precision_relaxed"] = relaxed_results["overall"]["precision"]
+    metrics["overall_recall_relaxed"] = relaxed_results["overall"]["recall"]
+
     if print_report:
         print('Accuracy: ' + str(metrics['accuracy']))
         print('Precision: ' + str(metrics['precision']))
         print('Recall: ' + str(metrics['recall']))
         print('F1 score: ' + str(metrics['f1']))
+        print('Relaxed Precision: ' + str(metrics["overall_precision_relaxed"]))
+        print('Relaxed Recall: ' + str(metrics["overall_recall_relaxed"]))
+        print('Relaxed F1: ' + str(metrics["overall_f1_relaxed"]))
         print(metrics['report'])
 
     if save_dir is not None:
