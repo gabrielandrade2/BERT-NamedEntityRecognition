@@ -1,6 +1,9 @@
 import argparse
+import json
+import os
 
 from sklearn.model_selection import train_test_split
+from transformers import BertJapaneseTokenizer
 
 from BERT.Model import TrainingParameters
 from BERT.evaluate import evaluate
@@ -28,15 +31,19 @@ if __name__ == '__main__':
     model_type = 'cl-tohoku/bert-base-japanese-char-v2'
 
     # Load the training file
+    tokenizer = BertJapaneseTokenizer.from_pretrained('cl-tohoku/bert-base-japanese-char-v2')
+
     sentences, tags = convert_xml_file_to_iob_list(args.training_file, args.tags, attr_list=args.attr,
-                                                   should_split_sentences=args.split_sentences)
+                                                   should_split_sentences=args.split_sentences,
+                                                   tokenizer=tokenizer.tokenize)
 
     # Check if a test file is provided
     if args.test_file is None:
         train_x, test_x, train_y, test_y = train_test_split(sentences, tags, test_size=args.test_ratio)
     else:
         test_x, test_y = convert_xml_file_to_iob_list(args.test_file, args.tags, attr_list=args.attr,
-                                                      should_split_sentences=args.split_sentences)
+                                                      should_split_sentences=args.split_sentences,
+                                                      tokenizer=tokenizer.tokenize)
         train_x = sentences
         train_y = tags
 
@@ -55,7 +62,11 @@ if __name__ == '__main__':
         model = train_from_sentences_tags_list(train_x, train_y, model_type, args.output,
                                                parameters=parameters,
                                                local_files_only=args.local_files_only,
-                                               device=args.device)
+                                               device=args.device, tokenizer=tokenizer)
 
     # Evaluate the model
-    evaluate(model, test_x, test_y, save_dir=args.output)
+    evaluate(model, test_x, test_y, save_dir=args.output, print_report=True, save_output_file=True)
+
+    os.makedirs(args.output, exist_ok=True)
+    with open('commandline_args.txt', 'w') as f:
+        json.dump(args.__dict__, f, indent=2)

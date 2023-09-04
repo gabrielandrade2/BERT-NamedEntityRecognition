@@ -53,4 +53,4 @@ if __name__ == '__main__':
         model = finetune_from_sentences_tags_list(train_x, train_y, model, args.output, parameters=parameters)
 
     # Evaluate the model
-    evaluate(model, test_x, test_y, save_dir=args.output)
+    evaluate(model, test_x, test_y, save_dir=args.output, print_report=True, save_output_file=True)

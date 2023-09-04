@@ -18,13 +18,17 @@ if __name__ == '__main__':
     parser.add_argument('--save_dir', type=str, help='Path of the folder to save the metrics', default=None)
     parser.add_argument('--save_output_file', action=argparse.BooleanOptionalAction,
                         help='Should save the produced output file? (Must have provided a save folder')
+    parser.add_argument('--model_type', type=str, help='Model type', default='cl-tohoku/bert-base-japanese-char-v2')
+    parser.add_argument('--device', type=str, help='Device', required=False, default="cpu")
+
     args = parser.parse_args()
 
-    model_type = 'cl-tohoku/bert-base-japanese-char-v2'
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    model_type = args.model_type
+    device = args.device if args.device is not None else 'cuda' if torch.cuda.is_available() else 'cpu'
     model = NERModel.load_transformers_model(model_type, args.model_path, device, args.local_files_only)
 
     sentences, tags = convert_xml_file_to_iob_list(args.input_file, args.tags,
-                                                   should_split_sentences=args.split_sentences, attr_list=args.attr)
+                                                   should_split_sentences=args.split_sentences, attr_list=args.attr,
+                                                   tokenizer=model.tokenizer.tokenize)
 
-    evaluate(model, sentences, tags, save_dir=args.save_dir, save_output_file=args.save_output_file)
+    evaluate(model, sentences, tags, save_dir=args.save_dir, save_output_file=args.save_output_file, print_report=True)

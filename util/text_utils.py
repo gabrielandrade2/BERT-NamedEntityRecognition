@@ -32,7 +32,7 @@ def split_sentences(texts, return_flat_list=True):
     :param return_flat_list: If True return a flat list with all the sentences, otherwise a list of lists.
     :return: The list of split sentences.
     """
-    print("Splitting sentences...")
+    # print("Splitting sentences...")
     processed_texts = list()
     for text in texts:
         processed_text = re.split(

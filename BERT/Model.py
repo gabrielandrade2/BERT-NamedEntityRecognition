@@ -154,7 +154,7 @@ class NERModel:
 
         losses = []
         model.to(device)
-        with tqdm(range(max_epoch), desc="epoch", ncols=100, position=0, leave=True) as t:
+        with tqdm(range(max_epoch), desc="epoch", ncols=100, position=0, leave=True, ascii=True) as t:
             for epoch in t:
                 model.train()
                 all_loss = 0
@@ -162,7 +162,7 @@ class NERModel:
 
                 for sent, label, _ in tqdm(data, desc="batch", ncols=100,
                                            total=math.ceil(len(data) / data.batch_size),
-                                           position=0, leave=True):
+                                           position=1, leave=False, ascii=True):
                     sent = torch.tensor(sent).to(device)
                     label = torch.tensor(label).to(device)
                     mask = [[float(i > 0) for i in ii] for ii in sent]
@@ -191,7 +191,7 @@ class NERModel:
 
                     for sent, label, _ in tqdm(val_data, desc="validation", ncols=100,
                                                total=math.ceil(len(val_data) / val_data.batch_size),
-                                               position=0, leave=True):
+                                               position=1, leave=False, ascii=True):
                         sent = torch.tensor(sent).to(device)
                         label = torch.tensor(label).to(device)
                         mask = [[float(i > 0) for i in ii] for ii in sent]
@@ -309,7 +309,7 @@ class NERModel:
 
         for sent, _, _ in tqdm(data, desc="prediction", ncols=100, total=int(len(data) / data.batch_size),
                                disable=not display_progress,
-                               position=0, leave=True):
+                               position=0, leave=True, ascii=True):
             sent = torch.tensor(sent).to(device)
             mask = [[float(i > 0) for i in ii] for ii in sent]
             mask = torch.tensor(mask).to(device)

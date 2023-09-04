@@ -29,16 +29,16 @@ def train_from_xml_texts(texts, model_name, tag_list, output_dir, parameters=Non
 
 
 def train_from_sentences_tags_list(sentences, tags, model_name, output_dir, parameters=None, local_files_only=False,
-                                   device=None, validation_ratio=0.1):
+                                   device=None, validation_ratio=0.1, tokenizer=None):
     ##### Split in train/validation #####
     train_x, validation_x, train_y, validation_y = train_test_split(sentences, tags, test_size=validation_ratio)
     return train_from_sentences_tags_list_val(train_x, train_y, validation_x, validation_y, model_name, output_dir,
-                                              parameters, local_files_only, device)
+                                              parameters, local_files_only, device, tokenizer)
 
 
 def train_from_sentences_tags_list_val(train_x, train_y, validation_x, validation_y, model_name, output_dir,
                                        parameters=None, local_files_only=False,
-                                       device=None):
+                                       device=None, tokenizer=None):
     os.makedirs(output_dir, exist_ok=True)
 
     train_x, train_y = exclude_long_sentences(512, train_x, train_y)
@@ -51,7 +51,8 @@ def train_from_sentences_tags_list_val(train_x, train_y, validation_x, validatio
     print('device: ' + device)
 
     ##### Process dataset for BERT #####
-    tokenizer = BertJapaneseTokenizer.from_pretrained(model_name, local_files_only=local_files_only)
+    if tokenizer == None:
+        tokenizer = BertJapaneseTokenizer.from_pretrained(model_name, local_files_only=local_files_only)
 
     # Create vocabulary
     label_vocab = bert_utils.create_label_vocab(train_y + validation_y)
@@ -67,6 +68,7 @@ def train_from_sentences_tags_list_val(train_x, train_y, validation_x, validatio
 
     # Get pre-trained model and fine-tune it
     pre_trained_model = BertForTokenClassification.from_pretrained(model_name, num_labels=len(label_vocab))
+    pre_trained_model.resize_token_embeddings(len(tokenizer))
     model = NERModel(pre_trained_model, tokenizer, label_vocab, device=device)
     if validation_x and validation_y:
         model.train(train_x, train_y, parameters, val=[validation_x, validation_y], outputdir=output_dir)
@@ -113,8 +115,6 @@ def finetune_from_sentences_tags_list_val(train_x, train_y, validation_x, valida
                                                                   model.vocabulary)
 
     # FineTune model
-    if output_dir is None:
-        output_dir = model.output_dir
     model.train(train_x, train_y, parameters, val=[validation_x, validation_y], outputdir=output_dir)
 
     with open(output_dir + '/label_vocab.json', 'w') as f:
