@@ -24,7 +24,11 @@ class ArticleReader:
 
     def __init__(self, file_path):
         self.file = open(file_path, 'r')
-        if next(self.file).strip() != '<articles>':
+        try:
+            line = ""
+            while line != '<articles>':
+                line = next(self.file).strip()
+        except Exception:
             raise Exception("Unsupported file: {}", file_path)
         self.header_matcher = re.compile(r'([^ ]*)="?([^"]*)"?[ >]')
 
